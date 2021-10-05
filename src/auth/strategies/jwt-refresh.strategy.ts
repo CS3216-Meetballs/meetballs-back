@@ -33,7 +33,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
 
     const isTokenMatch = await bcrypt.compare(
       refreshToken,
-      user?.refreshTokenHash,
+      user?.refreshTokenHash || '',
     );
 
     if (!isTokenMatch || type != 'refresh') {

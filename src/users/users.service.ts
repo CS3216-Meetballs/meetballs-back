@@ -37,7 +37,8 @@ export class UsersService {
       throw new NotFoundException('User does not exist');
     }
     const updatedUser = { ...user, ...changeNameDto };
-    return await this.userRepository.save(updatedUser);
+    await this.userRepository.save(updatedUser);
+    return this.userRepository.findOne({ uuid });
   }
 
   async setRefreshToken(

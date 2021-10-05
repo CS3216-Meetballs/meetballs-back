@@ -1,15 +1,20 @@
-import { AppConfigModule } from 'src/config/config.module';
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { AuthService } from './auth.service';
-import { LocalStrategy } from './strategies/local.strategy';
-import { AuthController } from './auth.controller';
-import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+
+import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller';
+
+import { LocalStrategy } from './strategies/local.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
-import { AppConfigService } from 'src/config/app.config';
-import { UsersModule } from 'src/users/users.module';
-import { JwtConfigService } from 'src/config/jwt.config';
+
+import { AppConfigModule } from '../config/config.module';
+import { AppConfigService } from '../config/app.config';
+import { JwtConfigService } from '../config/jwt.config';
+
+import { UsersModule } from '../users/users.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -17,6 +22,7 @@ import { JwtConfigService } from 'src/config/jwt.config';
     PassportModule,
     JwtModule.register({}),
     AppConfigModule,
+    MailModule,
   ],
   providers: [
     AuthService,

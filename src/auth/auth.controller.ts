@@ -1,5 +1,5 @@
 import { JwtResponseDto } from './dtos/jwt-response.dto';
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import {
   ApiTags,
   ApiCreatedResponse,
@@ -10,7 +10,6 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 
-import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { LoginAuthGuard } from './guard/login-auth.guard';
@@ -20,6 +19,11 @@ import { User } from '../users/user.entity';
 import { Usr } from '../shared/decorators/user.decorator';
 import { StatusResponseDto } from '../shared/dto/result-status.dto';
 import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
+import ChangePasswordDto from './dtos/change-password.dto';
+import ConfirmEmailDto from './dtos/confirm-email.dto';
+import ForgetPasswordDto from './dtos/forget-password.dto';
+import ResendConfirmationDto from './dtos/resend-confirmation.dto';
+import ResetPasswordDto from './dtos/reset-password.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -61,14 +65,21 @@ export class AuthController {
   })
   @ApiConflictResponse({ description: 'Email already exists' })
   @Post('/signup')
-  signup(@Body() createUserDto: CreateUserDto): Promise<StatusResponseDto> {
-    return this.authService.signup(createUserDto).then(() => {
-      return {
-        success: true,
-        message:
-          'Successfully created account. Please verify email before logging in',
-      };
+  async signup(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<StatusResponseDto> {
+    const user = await this.authService.signup(createUserDto);
+
+    await this.authService.sendEmailConfirmation(user.email).then(() => {
+      console.log('Verification email sent');
+      return user;
     });
+
+    return {
+      success: true,
+      message:
+        'Successfully created account. Please verify email before logging in',
+    };
   }
 
   /**
@@ -114,6 +125,114 @@ export class AuthController {
     return {
       success,
       message: 'See you again!',
+    };
+  }
+
+  //============ Email Confirmation endpoint ===============
+
+  /**
+   * Request email confirmation mail
+   */
+  @ApiCreatedResponse({
+    description: 'Confirmation request sent to email',
+    type: StatusResponseDto,
+  })
+  @Post('/resend-confirm')
+  async resendConfirmationEmail(
+    @Body() resendConfirmDto: ResendConfirmationDto,
+  ): Promise<StatusResponseDto> {
+    await this.authService.sendEmailConfirmation(resendConfirmDto.email);
+
+    return {
+      success: true,
+      message: 'Email sent! Check your mailbox for confirmation email.',
+    };
+  }
+
+  /**
+   * Validate user's email confirmation request
+   */
+  @ApiCreatedResponse({
+    description: 'Email confirmed',
+    type: StatusResponseDto,
+  })
+  @Post('/confirm')
+  async confirmEmail(
+    @Body() confirmEmailDto: ConfirmEmailDto,
+  ): Promise<StatusResponseDto> {
+    const isActivated = await this.authService.confirmEmail(confirmEmailDto);
+
+    if (!isActivated) {
+      return {
+        success: true,
+        message: 'Email already verified. Proceed to login.',
+      };
+    } else {
+      return {
+        success: true,
+        message: 'Email successfully verified. Proceed to login.',
+      };
+    }
+  }
+
+  // ============ Password related endpoint ===============
+
+  /**
+   * Request password reset email
+   */
+  @ApiCreatedResponse({
+    description: 'Reset request sent to email',
+    type: StatusResponseDto,
+  })
+  @Post('/forget-password')
+  async requestPasswordResetEmail(
+    @Body() forgetPasswordDto: ForgetPasswordDto,
+  ): Promise<StatusResponseDto> {
+    await this.authService.sendPasswordResetUrl(forgetPasswordDto.email);
+
+    return {
+      success: true,
+      message: 'Email sent! Check your mailbox for password reset email.',
+    };
+  }
+
+  /**
+   * Validate user's password reset request
+   */
+  @ApiCreatedResponse({
+    description: 'Password successfully reseted',
+    type: StatusResponseDto,
+  })
+  @Post('/password-reset')
+  async confirmPasswordReset(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<StatusResponseDto> {
+    await this.authService.resetPassword(resetPasswordDto);
+
+    return {
+      success: true,
+      message: 'Password successfully resetted. Proceed to login.',
+    };
+  }
+
+  /**
+   * Request to Change password
+   */
+  @UseBearerAuth()
+  @ApiCreatedResponse({
+    description: 'Password changed',
+    type: StatusResponseDto,
+  })
+  @Post('/change-password')
+  async changePassword(
+    @Usr() requester: User,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<StatusResponseDto> {
+    await this.authService.changePassword(requester, changePasswordDto);
+
+    return {
+      success: true,
+      message: 'Password successfully changed',
     };
   }
 }

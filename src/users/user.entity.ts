@@ -35,7 +35,7 @@ export class User {
     enum: ZoomAccountType,
     default: ZoomAccountType.NONE,
   })
-  type: ZoomAccountType;
+  type: number;
 
   @Exclude()
   @ApiHideProperty()
