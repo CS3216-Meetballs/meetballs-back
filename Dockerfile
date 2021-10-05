@@ -3,7 +3,7 @@ FROM node:latest
 WORKDIR /app
 
 COPY package.json ./
-RUN yarn install
+RUN npm install
 COPY . .
 
-CMD ["yarn", "start:dev"]
+CMD ["npm", "run", "start:dev"]
