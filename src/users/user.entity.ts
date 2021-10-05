@@ -1,7 +1,7 @@
 import { ApiHideProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsEmail } from 'class-validator';
-import { ZoomAccountType } from 'src/shared/zoom-type.enum';
+import { ZoomAccountType } from '../shared/enum/zoom-type.enum';
 import {
   PrimaryGeneratedColumn,
   Column,
@@ -35,7 +35,7 @@ export class User {
     enum: ZoomAccountType,
     default: ZoomAccountType.NONE,
   })
-  type: ZoomAccountType;
+  type: number;
 
   @Exclude()
   @ApiHideProperty()

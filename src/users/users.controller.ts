@@ -1,21 +1,50 @@
-import { User } from './entities/user.entity';
+import {
+  ApiOkResponse,
+  ApiParam,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
+import { User } from './user.entity';
 import {
   Controller,
   Get,
   Body,
-  Patch,
   Param,
   NotFoundException,
   ParseUUIDPipe,
+  UnauthorizedException,
+  Put,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ChangeNameDto } from './dto/change-name.dto';
+import { UseBearerAuth } from '../shared/decorators/auth.decorator';
+import { Usr } from '../shared/decorators/user.decorator';
 
 @ApiTags('User')
 @Controller('user')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  /**
+   * Gets current user
+   */
+  @UseBearerAuth()
+  @ApiOkResponse({
+    description: 'Successfully get requested user',
+    type: User,
+  })
+  @Get('/me')
+  async findCurrent(@Usr() requester: User): Promise<User> {
+    try {
+      const user = await this.usersService.findByUuid(requester.uuid);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      return user;
+    } catch (e) {
+      throw new NotFoundException('User not found');
+    }
+  }
 
   /**
    * Gets a user by uuid
@@ -24,25 +53,35 @@ export class UsersController {
     description: 'Successfully get requested user',
     type: User,
   })
-  @ApiParam({ name: 'uuid', description: 'The id of the profile to query' })
+  @ApiParam({ name: 'uuid', description: 'The id of the user to query' })
   @Get(':uuid')
-  findOne(@Param('uuid', ParseUUIDPipe) uuid: string): Promise<User> {
-    return this.usersService
-      .findByUuid(uuid)
-      .then((user) => {
-        if (user) {
-          return user;
-        } else {
-          throw new NotFoundException('User not found');
-        }
-      })
-      .catch(() => {
+  async findOne(@Param('uuid', ParseUUIDPipe) uuid: string): Promise<User> {
+    try {
+      const user = await this.usersService.findByUuid(uuid);
+      if (!user) {
         throw new NotFoundException('User not found');
-      });
+      }
+      return user;
+    } catch (e) {
+      throw new NotFoundException('User not found');
+    }
   }
 
-  @Patch(':uuid')
-  update(@Param('uuid') uuid: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(uuid, updateUserDto);
+  @UseBearerAuth()
+  @ApiOkResponse({
+    description: 'Successfully updated user',
+    type: User,
+  })
+  @ApiUnauthorizedResponse({ description: 'Not allowed to update this user' })
+  @Put(':uuid')
+  update(
+    @Usr() requester: User,
+    @Param('uuid') uuid: string,
+    @Body() changeNameDto: ChangeNameDto,
+  ): Promise<User> {
+    if (uuid !== requester.uuid) {
+      throw new UnauthorizedException('Not allowed to update this user');
+    }
+    return this.usersService.updateName(uuid, changeNameDto);
   }
 }

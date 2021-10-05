@@ -1,9 +1,9 @@
 # For local development
-FROM node:latest
+FROM node:12
 WORKDIR /app
 
 COPY package.json ./
-RUN yarn install
+RUN npm install
 COPY . .
 
-CMD ["yarn", "start:dev"]
+CMD ["npm", "run", "start:dev"]

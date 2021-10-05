@@ -1,8 +1,8 @@
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangeNameDto } from './dto/change-name.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { User } from './user.entity';
 
 @Injectable()
 export class UsersService {
@@ -12,11 +12,11 @@ export class UsersService {
   ) {}
 
   findByUuid(uuid: string): Promise<User> {
-    return this.userRepository.findOne({ uuid }, { relations: ['profile'] });
+    return this.userRepository.findOne({ uuid });
   }
 
   findByEmail(email: string): Promise<User> {
-    return this.userRepository.findOne({ email }, { relations: ['profile'] });
+    return this.userRepository.findOne({ email });
   }
 
   async doesEmailExist(email: string): Promise<boolean> {
@@ -31,14 +31,14 @@ export class UsersService {
     return this.userRepository.save(partialUser);
   }
 
-  update(uuid: string, updateUserDto: UpdateUserDto): Promise<User> {
-    return this.userRepository.findOne({ uuid }).then((user) => {
-      if (!user) {
-        throw new NotFoundException('User does not exist');
-      }
-      const updatedUser = { ...user, ...updateUserDto };
-      return this.userRepository.save(updatedUser);
-    });
+  async updateName(uuid: string, changeNameDto: ChangeNameDto): Promise<User> {
+    const user = await this.userRepository.findOne({ uuid });
+    if (!user) {
+      throw new NotFoundException('User does not exist');
+    }
+    const updatedUser = { ...user, ...changeNameDto };
+    await this.userRepository.save(updatedUser);
+    return this.userRepository.findOne({ uuid });
   }
 
   async setRefreshToken(
