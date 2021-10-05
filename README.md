@@ -31,9 +31,36 @@
 ```bash
 $ npm install
 ```
+## Development
 
-## Running the app
+The backend service runs on [http://localhost:3001](http://localhost:3001)
+### With Docker
+**Prequisites**
 
+1. [Docker](https://docs.docker.com/get-docker/)
+1. [docker-compose](https://docs.docker.com/compose/install/)
+
+**Running**
+```bash
+# Rebuild and start up docker images
+$ docker-compose up --build
+
+# Start up docker image
+$ docker-compose up
+
+# Shut down service
+$ docker-compose down
+
+# Shut down service and remove (postgres) volumes
+$ docker-compose down -v
+```
+### Without Docker
+
+**Prequisites**
+1. Local Postgres server
+2. Node
+
+**Running**
 ```bash
 # development
 $ npm run start
