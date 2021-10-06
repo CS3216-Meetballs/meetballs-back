@@ -9,7 +9,7 @@ export class Participant {
   meetingId: string;
 
   @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id)
-  @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
+  @JoinColumn({ name: 'meetingId', referencedColumnName: 'id' })
   meeting: Meeting;
 
   @Column({ type: 'varchar', nullable: true })

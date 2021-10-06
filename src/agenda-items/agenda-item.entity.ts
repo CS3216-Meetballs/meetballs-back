@@ -2,7 +2,7 @@ import { IsDefined } from 'class-validator';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { Meeting } from '../meetings/meeting.entity';
 
-@Entity({ name: 'agenda_items' })
+@Entity({ name: 'agendaItems' })
 export class AgendaItem {
   @PrimaryColumn({ type: 'varchar' })
   meetingId: string;
