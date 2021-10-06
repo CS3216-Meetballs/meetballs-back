@@ -27,29 +27,29 @@ export class Meeting {
 
   // Should this be createdDate of the zoom link or meetballs link?
   @CreateDateColumn()
-  created_at: Date;
+  createdAt: Date;
 
   @Column({ type: 'integer' })
   @IsPositive()
   duration: number;
 
   @Column({ type: 'varchar', nullable: true })
-  host_id?: string;
+  hostId?: string;
 
   @ManyToOne(() => User, (user: User) => user.uuid)
-  @JoinColumn({ name: 'host_id', referencedColumnName: 'uuid' })
-  host: string;
+  @JoinColumn({ name: 'hostId', referencedColumnName: 'uuid' })
+  host: User;
 
   @Column({ type: 'varchar' })
-  meeting_id: string;
-
-  @Column({ type: 'varchar' })
-  @IsUrl()
-  start_url: string;
+  meetingId: string;
 
   @Column({ type: 'varchar' })
   @IsUrl()
-  join_url: string;
+  startUrl: string;
+
+  @Column({ type: 'varchar' })
+  @IsUrl()
+  joinUrl: string;
 
   // TODO: How will the be triggered to update to started?
   @Column({
@@ -60,14 +60,14 @@ export class Meeting {
   type: number;
 
   @Column({ type: 'boolean', default: false })
-  enable_transcription: boolean;
+  enableTranscription: boolean;
 
   @Column({ type: 'varchar' })
   transcription: string;
 
   @Column({ type: 'varchar' })
   @IsUrl()
-  video_url: string;
+  videoUrl: string;
 
   @OneToMany(() => AgendaItem, (agendaItem) => agendaItem.meeting)
   agendaItems?: AgendaItem[];

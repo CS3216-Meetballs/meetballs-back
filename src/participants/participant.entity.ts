@@ -6,7 +6,7 @@ import { ParticipantRole } from '../shared/enum/participant-role.enum';
 @Entity({ name: 'participants' })
 export class Participant {
   @PrimaryColumn({ type: 'varchar' })
-  meeting_id: string;
+  meetingId: string;
 
   @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id)
   @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
@@ -17,10 +17,10 @@ export class Participant {
 
   @Column({ type: 'varchar' })
   @IsEmail()
-  user_email: string;
+  userEmail: string;
 
   @Column({ type: 'timestamptz', nullable: true })
-  time_joined?: Date;
+  timeJoined?: Date;
 
   @Column({
     type: 'enum',
