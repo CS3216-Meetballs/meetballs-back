@@ -7,6 +7,9 @@ import { AppConfigModule } from './config/config.module';
 import { DatabaseConfigService } from './config/database.config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { MeetingsModule } from './meetings/meetings.module';
+import { AgendaItemsModule } from './agenda-items/agenda-items.module';
+import { ParticipantsModule } from './participants/participants.module';
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { AuthModule } from './auth/auth.module';
     }),
     UsersModule,
     AuthModule,
+    MeetingsModule,
+    AgendaItemsModule,
+    ParticipantsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
