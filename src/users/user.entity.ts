@@ -9,7 +9,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Entity,
+  OneToMany,
 } from 'typeorm';
+import { Meeting } from '../meetings/meeting.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -56,4 +58,7 @@ export class User {
   @ApiHideProperty()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => Meeting, (meeting) => meeting.host)
+  createdMeetings?: Meeting[];
 }
