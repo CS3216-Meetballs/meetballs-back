@@ -113,30 +113,10 @@ export class AgendaItemsService {
 
   public async updateAgendaItemByMeetingIdAndPosition(
     meetingId: string,
-    position: number,
-    updateAgendaItemDto: UpdateAgendaItemDto,
+    updateAgendaItemDtos: UpdateAgendaItemDto[],
   ): Promise<void> {
-    const agendaItemToUpdate = await this.agendaItemRepository.findOne({
-      meetingId,
-      position,
-    });
-    if (!agendaItemToUpdate) {
-      throw new NotFoundException(
-        `Agenda Item with meetingId ${meetingId} and position ${position} not found`,
-      );
-    }
     try {
-      await this.agendaItemRepository
-        .createQueryBuilder()
-        .update(AgendaItem)
-        .set({
-          ...updateAgendaItemDto,
-        })
-        .where({
-          meetingId,
-          position,
-        })
-        .execute();
+      await this.agendaItemRepository.save(updateAgendaItemDtos);
     } catch (err) {
       throw new BadRequestException(err.message);
     }

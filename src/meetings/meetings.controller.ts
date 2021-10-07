@@ -1,4 +1,11 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { ApiBody, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { AgendaItemsService } from '../agenda-items/agenda-items.service';
 import { ParticipantsService } from '../participants/participants.service';
@@ -22,6 +29,12 @@ export class MeetingsController {
     private readonly participantsService: ParticipantsService,
     private readonly agendaItemsService: AgendaItemsService,
   ) {}
+
+  @Get('/:id')
+  public async getMeeting(@Param('id') meetingId: string) {
+    const meeting = await this.meetingsService.findOneById(meetingId);
+    return meeting;
+  }
 
   @ApiCreatedResponse({
     type: CreateMeetingResponse,

@@ -69,17 +69,16 @@ export class AgendaItemsController {
   @ApiOkResponse({
     description: 'Successfully updated agenda item',
   })
+  @ApiBody({ type: [UpdateAgendaItemDto] })
   @UseBearerAuth()
-  @Put('/:meetingId/:position')
+  @Put('/:meetingId')
   public async updateAgendaItemByPosition(
     @Param('meetingId', ParseUUIDPipe) meetingId: string,
-    @Param('position', ParseIntPipe) originalPosition: number,
-    @Body() updateAgendaItemDto: UpdateAgendaItemDto,
+    @Body() updateAgendaItemDtos: UpdateAgendaItemDto[],
   ): Promise<void> {
     await this.agendaItemsService.updateAgendaItemByMeetingIdAndPosition(
       meetingId,
-      originalPosition,
-      updateAgendaItemDto,
+      updateAgendaItemDtos,
     );
   }
 }
