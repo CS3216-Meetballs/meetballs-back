@@ -1,7 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
-import { CreateParticipantDto } from './dto/create-participant-dto';
+import { CreateParticipantDto } from './dto/create-participant.dto';
 import { Participant } from './participant.entity';
 import { ParticipantsService } from './participants.service';
 

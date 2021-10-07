@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateParticipantDto } from './dto/create-participant-dto';
+import { CreateParticipantDto } from './dto/create-participant.dto';
 import { Participant } from './participant.entity';
 
 @Injectable()
@@ -28,16 +28,5 @@ export class ParticipantsService {
       ...createParticipantDto,
     });
     return this.participantsRepository.save(participantToBeCreated);
-  }
-
-  public async createParticipantsForMeeting(
-    createParticipantDto: CreateParticipantDto[],
-    meetingId: string,
-  ): Promise<Participant[]> {
-    const participantsToCreate: Participant[] = [];
-    createParticipantDto.forEach((participant) => {
-      participantsToCreate.push({ ...participant, meetingId });
-    });
-    return this.participantsRepository.save(participantsToCreate);
   }
 }

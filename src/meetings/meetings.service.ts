@@ -11,16 +11,21 @@ export class MeetingsService {
     private meetingRepository: Repository<Meeting>,
   ) {}
 
+  public async findOneById(id: string) {
+    return this.meetingRepository.findOne({ id });
+  }
+
   public async createMeeting(
     createMeetingDto: CreateMeetingDto,
     hostId: string,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { participants, agendaItems, ...rest } = createMeetingDto;
+    // const { participants, agendaItems, ...rest } = createMeetingDto;
     const meetingToCreate = this.meetingRepository.create({
-      ...rest,
+      ...createMeetingDto,
       hostId,
     });
     return this.meetingRepository.save(meetingToCreate);
+    // return meetingToCreate;
   }
 }
