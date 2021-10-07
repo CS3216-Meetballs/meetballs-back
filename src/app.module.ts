@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { MeetingsModule } from './meetings/meetings.module';
 import { AgendaItemsModule } from './agenda-items/agenda-items.module';
 import { ParticipantsModule } from './participants/participants.module';
+import { SeederModule } from './seeders/seeder.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ParticipantsModule } from './participants/participants.module';
     MeetingsModule,
     AgendaItemsModule,
     ParticipantsModule,
+    SeederModule,
   ],
   controllers: [AppController],
   providers: [AppService],

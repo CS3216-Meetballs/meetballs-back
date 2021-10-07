@@ -47,11 +47,6 @@ export class CreateMeetingDto {
   @IsBoolean()
   enableTranscription: boolean;
 
-  @IsString()
-  @IsUrl()
-  @IsDefined()
-  videoUrl: string;
-
   @IsArray()
   @Type(() => CreateParticipantDto)
   @IsDefined()

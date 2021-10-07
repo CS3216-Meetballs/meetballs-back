@@ -21,6 +21,8 @@ services:
       - DB_SYNCHRONIZE=true
       # App variables
       - CLIENT_URL=http://localhost:3000
+      # Seeder
+      - SEEDER_SHOULD_SEED=true
     ports: 
       - 3001:3001
     volumes: 
