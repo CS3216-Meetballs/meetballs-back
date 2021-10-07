@@ -8,16 +8,18 @@ export class Participant {
   @PrimaryColumn({ type: 'varchar' })
   meetingId: string;
 
-  @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id)
-  @JoinColumn({ name: 'meetingId', referencedColumnName: 'id' })
-  meeting: Meeting;
+  @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
+  meeting?: Meeting;
 
-  @Column({ type: 'varchar', nullable: true })
-  username: string;
-
-  @Column({ type: 'varchar' })
+  @PrimaryColumn({ type: 'varchar' })
   @IsEmail()
   userEmail: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  username?: string;
 
   @Column({ type: 'timestamptz', nullable: true })
   timeJoined?: Date;
@@ -27,5 +29,5 @@ export class Participant {
     enum: ParticipantRole,
     default: ParticipantRole.CONFERENCE_MEMBER,
   })
-  role: number;
+  role?: number;
 }

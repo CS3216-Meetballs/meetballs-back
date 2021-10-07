@@ -22,7 +22,7 @@ export class Meeting {
   @IsDefined()
   name: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   description: string;
 
   // Should this be createdDate of the zoom link or meetballs link?
@@ -37,8 +37,8 @@ export class Meeting {
   hostId?: string;
 
   @ManyToOne(() => User, (user: User) => user.uuid)
-  @JoinColumn({ name: 'hostId', referencedColumnName: 'uuid' })
-  host: User;
+  @JoinColumn({ name: 'host_id', referencedColumnName: 'uuid' })
+  host?: User;
 
   @Column({ type: 'varchar' })
   meetingId: string;
@@ -62,17 +62,21 @@ export class Meeting {
   @Column({ type: 'boolean', default: false })
   enableTranscription: boolean;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   transcription: string;
 
   @Column({ type: 'varchar' })
   @IsUrl()
   videoUrl: string;
 
-  @OneToMany(() => AgendaItem, (agendaItem) => agendaItem.meeting)
+  @OneToMany(() => AgendaItem, (agendaItem) => agendaItem.meeting, {
+    cascade: true,
+  })
   agendaItems?: AgendaItem[];
 
   // one to many for participants_lists
-  @OneToMany(() => Participant, (participant) => participant.meeting)
+  @OneToMany(() => Participant, (participant) => participant.meeting, {
+    cascade: true,
+  })
   participants: Participant[];
 }

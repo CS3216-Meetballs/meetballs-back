@@ -7,9 +7,11 @@ export class AgendaItem {
   @PrimaryColumn({ type: 'varchar' })
   meetingId: string;
 
-  @ManyToOne(() => Meeting, (meeting) => meeting.agendaItems)
-  @JoinColumn({ name: 'meetingId', referencedColumnName: 'id' })
-  meeting: Meeting;
+  @ManyToOne(() => Meeting, (meeting) => meeting.agendaItems, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
+  meeting?: Meeting;
 
   @PrimaryColumn({ type: 'int2' })
   position: number;
@@ -18,8 +20,8 @@ export class AgendaItem {
   @IsDefined()
   name: string;
 
-  @Column({ type: 'varchar' })
-  description: string;
+  @Column({ type: 'varchar', nullable: true })
+  description?: string;
 
   // To be updated when is_current updates from false to true
   @Column({ type: 'timestamptz', nullable: true })
@@ -34,5 +36,5 @@ export class AgendaItem {
   expectedDuration: number;
 
   @Column({ type: 'boolean', default: false })
-  isCurrent: boolean;
+  isCurrent?: boolean;
 }
