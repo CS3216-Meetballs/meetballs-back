@@ -17,7 +17,10 @@ import {
 } from '@nestjs/swagger';
 import { MeetingsGateway } from 'src/meetings/meetings.gateway';
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
-import { CreateParticipantsDto } from './dto/create-participant.dto';
+import {
+  CreateParticipantsDto,
+  CreateParticipantDto,
+} from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
 import { UpdateParticipantsDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
@@ -80,8 +83,7 @@ export class ParticipantsController {
   ): Promise<Participant[]> {
     return this.participantsService.getParticipantsByMeetingId(meetingId);
   }
-  
-  
+
   @ApiCreatedResponse({
     description: 'Successfully created participant',
     type: Participant,
@@ -89,7 +91,7 @@ export class ParticipantsController {
   @UseBearerAuth()
   @ApiBody({ type: CreateParticipantDto })
   @Post('/')
-  public async createOneP(
+  public async createOneParticipant(
     @Body() createParticipantDto: CreateParticipantDto,
   ): Promise<Participant> {
     return this.participantsService
