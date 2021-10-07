@@ -165,8 +165,8 @@ export class AgendaItemsService {
     agendaItemsToReorder = agendaItemsToReorder.map((agendaItem) => {
       const oldPosition = agendaItem.position;
       const newPosition = positions.find(
-        (position) => position['oldPosition'] === oldPosition,
-      )['newPosition'];
+        (position) => position.oldPosition === oldPosition,
+      ).newPosition;
       if (isNil(newPosition)) {
         throw new InternalServerErrorException();
       }
