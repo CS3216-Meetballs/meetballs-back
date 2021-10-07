@@ -69,6 +69,7 @@ export class AgendaItemsController {
   @ApiOkResponse({
     description: 'Successfully updated agenda item',
   })
+  @UseBearerAuth()
   @Put('/:meetingId/:position')
   public async updateAgendaItemByPosition(
     @Param('meetingId', ParseUUIDPipe) meetingId: string,
