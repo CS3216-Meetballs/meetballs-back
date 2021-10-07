@@ -18,7 +18,7 @@ export class MeetingsSeeder implements ISeeder {
 
   async seed(): Promise<any> {
     const user = await this.userRepository.findOne({
-      email: `admin@gmail.com`,
+      email: `admin@email.com`,
     });
     return this.meetingRepository.save({
       id: '10c7e0a8-120b-45e0-a37f-be92170bfb8d',

@@ -22,7 +22,7 @@ export class UsersSeeder implements ISeeder {
         firstName: subject,
         lastName: subject,
         passwordHash,
-        email: `${subject}@gmail.com`,
+        email: `${subject}@email.com`,
         isEmailConfirmed: true,
       });
     });
