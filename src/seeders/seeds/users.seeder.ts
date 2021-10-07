@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TypeOrmUpsert } from '@nest-toolbox/typeorm-upsert';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { User } from 'src/users/user.entity';
 import { ISeeder } from '../seeder.interface';
-import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 @Injectable()
 export class UsersSeeder implements ISeeder {
