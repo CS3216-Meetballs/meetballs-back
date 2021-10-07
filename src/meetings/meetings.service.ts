@@ -11,6 +11,10 @@ export class MeetingsService {
     private meetingRepository: Repository<Meeting>,
   ) {}
 
+  public async findOneById(id: string) {
+    return this.meetingRepository.findOne({ id });
+  }
+
   public async createMeeting(
     createMeetingDto: CreateMeetingDto,
     hostId: string,
@@ -21,6 +25,7 @@ export class MeetingsService {
       ...rest,
       hostId,
     });
-    return this.meetingRepository.save(meetingToCreate);
+    // return this.meetingRepository.save(meetingToCreate);
+    return meetingToCreate;
   }
 }

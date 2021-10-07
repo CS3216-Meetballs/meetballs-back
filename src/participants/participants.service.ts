@@ -38,6 +38,7 @@ export class ParticipantsService {
     createParticipantDto.forEach((participant) => {
       participantsToCreate.push({ ...participant, meetingId });
     });
-    return this.participantsRepository.save(participantsToCreate);
+    // return this.participantsRepository.save(participantsToCreate);
+    return participantsToCreate;
   }
 }
