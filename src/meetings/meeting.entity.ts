@@ -65,9 +65,9 @@ export class Meeting {
   @Column({ type: 'varchar', nullable: true })
   transcription: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   @IsUrl()
-  videoUrl: string;
+  videoUrl?: string;
 
   @OneToMany(() => AgendaItem, (agendaItem) => agendaItem.meeting, {
     cascade: true,
