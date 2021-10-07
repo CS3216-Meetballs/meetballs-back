@@ -16,20 +16,20 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { MeetingsGateway } from 'src/meetings/meetings.gateway';
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { AgendaItem } from './agenda-item.entity';
 import { AgendaItemsService } from './agenda-items.service';
 import { CreateAgendaItemDto } from './dto/create-agenda-item.dto';
 import { UpdateAgendaItemDto } from './dto/update-agenda-item.dto';
 import { UpdateAgendaItemsPositionDto } from './dto/update-agenda-items-position.dto';
+import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 
 @ApiTags('AgendaItem')
 @Controller('agenda-item')
 export class AgendaItemsController {
   constructor(
     private readonly agendaItemsService: AgendaItemsService,
-    private readonly meetingsGateway: MeetingsGateway,
+    private readonly meetingGateway: MeetingSocketGateway,
   ) {}
 
   @ApiCreatedResponse({
@@ -79,7 +79,7 @@ export class AgendaItemsController {
       meetingId,
       position,
     );
-    this.meetingsGateway.emitAgendaUpdated(meetingId);
+    this.meetingGateway.emitAgendaUpdated(meetingId);
   }
 
   @ApiOkResponse({
@@ -100,7 +100,7 @@ export class AgendaItemsController {
       position,
       updateAgendaItemDto,
     );
-    this.meetingsGateway.emitAgendaUpdated(meetingId);
+    this.meetingGateway.emitAgendaUpdated(meetingId);
   }
 
   @ApiOkResponse({
@@ -117,7 +117,7 @@ export class AgendaItemsController {
     await this.agendaItemsService.reorderAgendaItemsPosition(
       updateAgendaItemsPositionDto,
     );
-    this.meetingsGateway.emitAgendaUpdated(
+    this.meetingGateway.emitAgendaUpdated(
       updateAgendaItemsPositionDto.meetingId,
     );
   }

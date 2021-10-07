@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsDefined,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsPositive,
   IsString,
@@ -15,8 +16,18 @@ import {
 import { CreateAgendaItemDto } from '../../agenda-items/dto/create-agenda-item.dto';
 import { CreateParticipantDto } from '../../participants/dto/create-participant.dto';
 
+export class CreateParticipantMinimalDto extends OmitType(
+  CreateParticipantDto,
+  ['meetingId'],
+) {}
+
+export class CreateAgendaItemMinimalDto extends OmitType(CreateAgendaItemDto, [
+  'meetingId',
+]) {}
+
 export class CreateMeetingDto {
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @IsString()
@@ -48,24 +59,24 @@ export class CreateMeetingDto {
   enableTranscription: boolean;
 
   @IsArray()
-  @Type(() => CreateParticipantDto)
+  @Type(() => CreateParticipantMinimalDto)
   @IsDefined()
   @ValidateNested({ each: true })
   @ArrayMinSize(1) // should at least contain the 1 participant (the host)
   @ApiProperty({
     description: 'List of participants for the meeting',
-    type: [CreateParticipantDto],
+    type: [CreateParticipantMinimalDto],
   })
-  participants: CreateParticipantDto[];
+  participants: CreateParticipantMinimalDto[];
 
   @IsArray()
-  @Type(() => CreateAgendaItemDto)
+  @Type(() => CreateAgendaItemMinimalDto)
   @IsDefined()
   @ValidateNested({ each: true })
   @ArrayMinSize(1)
   @ApiProperty({
     description: 'List of agenda items for the meeting',
-    type: [CreateAgendaItemDto],
+    type: [CreateAgendaItemMinimalDto],
   })
-  agendaItems: CreateAgendaItemDto[];
+  agendaItems: CreateAgendaItemMinimalDto[];
 }

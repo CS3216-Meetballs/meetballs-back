@@ -16,7 +16,6 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { MeetingsGateway } from 'src/meetings/meetings.gateway';
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
 import {
   CreateParticipantsDto,
@@ -26,13 +25,14 @@ import { DeleteParticipantsDto } from './dto/delete-participants.dto';
 import { UpdateParticipantsDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { ParticipantsService } from './participants.service';
+import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 
 @ApiTags('Participant')
 @Controller('participant')
 export class ParticipantsController {
   constructor(
     private readonly participantsService: ParticipantsService,
-    private readonly meetingsGateway: MeetingsGateway,
+    private readonly meetingGateway: MeetingSocketGateway,
   ) {}
 
   @ApiCreatedResponse({
@@ -104,7 +104,7 @@ export class ParticipantsController {
     return this.participantsService
       .createOneParticipant(createParticipantDto)
       .then((participant) => {
-        this.meetingsGateway.emitParticipantsUpdated(
+        this.meetingGateway.emitParticipantsUpdated(
           createParticipantDto.meetingId,
         );
         return participant;
