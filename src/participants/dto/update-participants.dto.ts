@@ -3,20 +3,18 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsDate,
   IsDefined,
   IsEmail,
   IsEnum,
   IsOptional,
+  IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { ParticipantRole } from '../../shared/enum/participant-role.enum';
 
-export class CreateParticipantDto {
-  @IsUUID()
-  @IsOptional() // No need if it is created when create a meeting.
-  meetingId?: string;
-
+class UpdateParticipant {
   @IsEmail()
   @IsDefined()
   userEmail: string;
@@ -24,17 +22,30 @@ export class CreateParticipantDto {
   @IsOptional()
   @IsEnum(ParticipantRole)
   role?: number;
+
+  @IsOptional()
+  @IsString()
+  username?: string;
+
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  timeJoined?: Date;
 }
 
-export class CreateParticipantsDto {
+export class UpdateParticipantsDto {
+  @IsUUID()
+  @IsDefined()
+  meetingId: string;
+
   @IsArray()
-  @Type(() => CreateParticipantDto)
+  @Type(() => UpdateParticipant)
   @ValidateNested({ each: true })
   @IsDefined()
   @ArrayMinSize(1) // If items are reordered, at least 2 items need to be swapped
   @ApiProperty({
-    description: 'List participants to be created',
-    type: [CreateParticipantDto],
+    description: 'List participants to be updated',
+    type: [UpdateParticipant],
   })
-  participants: CreateParticipantDto[];
+  participants: UpdateParticipant[];
 }

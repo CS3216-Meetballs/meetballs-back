@@ -4,11 +4,13 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  IsUUID,
   Min,
 } from 'class-validator';
 
 export class CreateAgendaItemDto {
-  @IsString()
+  @IsUUID()
+  @IsOptional() // No need if it is created when create a meeting.
   meetingId: string;
 
   @IsInt()

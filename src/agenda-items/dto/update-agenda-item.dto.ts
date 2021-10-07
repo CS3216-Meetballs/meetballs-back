@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
@@ -7,7 +8,6 @@ import {
   IsString,
 } from 'class-validator';
 
-// Does not include position
 export class UpdateAgendaItemDto {
   @IsString()
   @IsOptional()
@@ -18,6 +18,7 @@ export class UpdateAgendaItemDto {
   description?: string;
 
   @IsDate()
+  @Type(() => Date)
   @IsOptional()
   startTime?: Date;
 
