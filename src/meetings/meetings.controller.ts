@@ -1,4 +1,12 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import { MeetingsGateway } from './meetings.gateway';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiBody, ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { Usr } from '../shared/decorators/user.decorator';
@@ -10,7 +18,16 @@ import { MeetingsService } from './meetings.service';
 @ApiTags('Meeting')
 @Controller('meeting')
 export class MeetingsController {
-  constructor(private readonly meetingsService: MeetingsService) {}
+  constructor(
+    private readonly meetingsService: MeetingsService,
+    private readonly meetingsGateway: MeetingsGateway,
+  ) {}
+
+  @Get('/:id')
+  public async getMeeting(@Param('id') meetingId: string) {
+    const meeting = await this.meetingsService.findOneById(meetingId);
+    return meeting;
+  }
 
   @ApiCreatedResponse({
     type: CreateMeetingResponse,
@@ -28,6 +45,10 @@ export class MeetingsController {
       const createdMeeting = await this.meetingsService.createMeeting(
         createMeetingDto,
         hostId,
+      );
+      this.meetingsGateway.emitMeetingUpdated(
+        createdMeeting.id,
+        createdMeeting,
       );
       return createdMeeting;
     } catch (err) {

@@ -16,6 +16,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { MeetingsGateway } from 'src/meetings/meetings.gateway';
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { AgendaItem } from './agenda-item.entity';
 import { AgendaItemsService } from './agenda-items.service';
@@ -26,7 +27,10 @@ import { UpdateAgendaItemsPositionDto } from './dto/update-agenda-items-position
 @ApiTags('AgendaItem')
 @Controller('agenda-item')
 export class AgendaItemsController {
-  constructor(private readonly agendaItemsService: AgendaItemsService) {}
+  constructor(
+    private readonly agendaItemsService: AgendaItemsService,
+    private readonly meetingsGateway: MeetingsGateway,
+  ) {}
 
   @ApiCreatedResponse({
     description: 'Successfully created agenda item',
@@ -46,7 +50,7 @@ export class AgendaItemsController {
     type: [AgendaItem],
   })
   @ApiParam({
-    name: 'id',
+    name: 'meetingId',
     description: 'The id of the meeting',
   })
   @UseBearerAuth()
@@ -75,6 +79,7 @@ export class AgendaItemsController {
       meetingId,
       position,
     );
+    this.meetingsGateway.emitAgendaUpdated(meetingId);
   }
 
   @ApiOkResponse({
@@ -95,6 +100,7 @@ export class AgendaItemsController {
       position,
       updateAgendaItemDto,
     );
+    this.meetingsGateway.emitAgendaUpdated(meetingId);
   }
 
   @ApiOkResponse({
@@ -110,6 +116,9 @@ export class AgendaItemsController {
   ): Promise<void> {
     await this.agendaItemsService.reorderAgendaItemsPosition(
       updateAgendaItemsPositionDto,
+    );
+    this.meetingsGateway.emitAgendaUpdated(
+      updateAgendaItemsPositionDto.meetingId,
     );
   }
 }
