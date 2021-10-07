@@ -6,8 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
 import { AgendaItem } from './agenda-item.entity';
-import { CreateAgendaItemDto } from './dto/create-agenda-item-dto';
-import { UpdateAgendaItemDto } from './dto/update-agenda-item-dto';
+import { CreateAgendaItemDto } from './dto/create-agenda-item.dto';
+import { UpdateAgendaItemDto } from './dto/update-agenda-item.dto';
 
 @Injectable()
 export class AgendaItemsService {

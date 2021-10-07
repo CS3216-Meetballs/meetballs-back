@@ -18,8 +18,8 @@ import {
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { AgendaItem } from './agenda-item.entity';
 import { AgendaItemsService } from './agenda-items.service';
-import { CreateAgendaItemDto } from './dto/create-agenda-item-dto';
-import { UpdateAgendaItemDto } from './dto/update-agenda-item-dto';
+import { CreateAgendaItemDto } from './dto/create-agenda-item.dto';
+import { UpdateAgendaItemDto } from './dto/update-agenda-item.dto';
 
 @ApiTags('AgendaItem')
 @Controller('agenda-item')

@@ -12,8 +12,8 @@ import {
   IsUrl,
   ValidateNested,
 } from 'class-validator';
-import { CreateAgendaItemDto } from '../../agenda-items/dto/create-agenda-item-dto';
-import { CreateParticipantDto } from '../../participants/dto/create-participant-dto';
+import { CreateAgendaItemDto } from '../../agenda-items/dto/create-agenda-item.dto';
+import { CreateParticipantDto } from '../../participants/dto/create-participant.dto';
 
 export class CreateMeetingDto {
   @IsString()
