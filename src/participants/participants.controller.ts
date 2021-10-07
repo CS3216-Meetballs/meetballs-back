@@ -15,6 +15,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { MeetingsGateway } from 'src/meetings/meetings.gateway';
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { CreateParticipantsDto } from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
@@ -25,7 +26,10 @@ import { ParticipantsService } from './participants.service';
 @ApiTags('Participant')
 @Controller('participant')
 export class ParticipantsController {
-  constructor(private readonly participantsService: ParticipantsService) {}
+  constructor(
+    private readonly participantsService: ParticipantsService,
+    private readonly meetingsGateway: MeetingsGateway,
+  ) {}
 
   @ApiCreatedResponse({
     description: 'Successfully created participant',
@@ -33,7 +37,7 @@ export class ParticipantsController {
   })
   @ApiBody({ type: CreateParticipantsDto })
   @UseBearerAuth()
-  @Post('/')
+  @Post('/create-many')
   public async createParticipants(
     @Body() createParticipantsDto: CreateParticipantsDto,
   ): Promise<Participant[]> {
@@ -75,5 +79,26 @@ export class ParticipantsController {
     @Param('meetingId', ParseUUIDPipe) meetingId: string,
   ): Promise<Participant[]> {
     return this.participantsService.getParticipantsByMeetingId(meetingId);
+  }
+  
+  
+  @ApiCreatedResponse({
+    description: 'Successfully created participant',
+    type: Participant,
+  })
+  @UseBearerAuth()
+  @ApiBody({ type: CreateParticipantDto })
+  @Post('/')
+  public async createOneP(
+    @Body() createParticipantDto: CreateParticipantDto,
+  ): Promise<Participant> {
+    return this.participantsService
+      .createOneParticipant(createParticipantDto)
+      .then((participant) => {
+        this.meetingsGateway.emitParticipantsUpdated(
+          createParticipantDto.meetingId,
+        );
+        return participant;
+      });
   }
 }

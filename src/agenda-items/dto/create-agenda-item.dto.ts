@@ -11,7 +11,7 @@ import {
 export class CreateAgendaItemDto {
   @IsUUID()
   @IsOptional() // No need if it is created when create a meeting.
-  meetingId?: string;
+  meetingId: string;
 
   @IsInt()
   @Min(0)
