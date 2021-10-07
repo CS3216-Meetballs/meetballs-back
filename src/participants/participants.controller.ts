@@ -9,6 +9,7 @@ import {
   Put,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
@@ -51,6 +52,9 @@ export class ParticipantsController {
     description: 'Successfully deleted participants',
     type: [Participant],
   })
+  @ApiBadRequestResponse({
+    description: 'Invalid inputs in request body',
+  })
   @ApiBody({ type: DeleteParticipantsDto })
   @UseBearerAuth()
   @Delete('/')
@@ -62,6 +66,9 @@ export class ParticipantsController {
 
   @ApiOkResponse({
     description: 'Successfully updated participants',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid positions in request body',
   })
   @ApiBody({ type: UpdateParticipantsDto })
   @UseBearerAuth()

@@ -20,6 +20,10 @@ class UpdateParticipant {
   userEmail: string;
 
   @IsOptional()
+  @ApiProperty({
+    enum: ParticipantRole,
+    description: 'CONFERENCE_MEMBER=1, ADMIN=2',
+  })
   @IsEnum(ParticipantRole)
   role?: number;
 
