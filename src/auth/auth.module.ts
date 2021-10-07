@@ -33,5 +33,6 @@ import { MailModule } from '../mail/mail.module';
     AppConfigService,
   ],
   controllers: [AuthController],
+  exports: [AuthService],
 })
 export class AuthModule {}

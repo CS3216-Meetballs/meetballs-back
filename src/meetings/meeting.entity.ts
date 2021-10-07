@@ -59,6 +59,12 @@ export class Meeting {
   })
   type: number;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  startedAt?: Date;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  endedAt?: Date;
+
   @Column({ type: 'boolean', default: false })
   enableTranscription: boolean;
 

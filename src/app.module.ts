@@ -11,6 +11,7 @@ import { MeetingsModule } from './meetings/meetings.module';
 import { AgendaItemsModule } from './agenda-items/agenda-items.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { SeederModule } from './seeders/seeder.module';
+import { MeetingSocketModule } from './meeting-socket/meeting-socket.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { SeederModule } from './seeders/seeder.module';
     UsersModule,
     AuthModule,
     MeetingsModule,
+    MeetingSocketModule,
     AgendaItemsModule,
     ParticipantsModule,
     SeederModule,

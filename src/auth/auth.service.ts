@@ -48,6 +48,20 @@ export class AuthService {
     return user;
   }
 
+  async getUserFromToken(accessToken: string): Promise<User> {
+    let payload: TokenPayload;
+    try {
+      payload = this.jwtService.verify<TokenPayload>(accessToken, {
+        ignoreExpiration: false,
+        secret: this.jwtConfigService.mailVerifyTokenOptions.secret,
+      });
+    } catch (error) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    return this.usersService.findByUuid(payload.userId);
+  }
+
   getJwtAccessToken(
     user: User,
   ): Pick<JwtResponseDto, 'access_token' | 'expires_in'> {

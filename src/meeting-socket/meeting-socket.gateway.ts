@@ -1,5 +1,5 @@
-import { AgendaItem } from '../agenda-items/agenda-item.entity';
-import { MeetingsService } from './meetings.service';
+import { MeetingSocketService } from './meeting-socket.service';
+import { AuthService } from '../auth/auth.service';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -7,30 +7,48 @@ import {
   WebSocketServer,
   WsException,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { Meeting } from './meeting.entity';
 import { classToPlain } from 'class-transformer';
+import { Server, Socket } from 'socket.io';
+import { Meeting } from '../meetings/meeting.entity';
 
 @WebSocketGateway({ namespace: 'meeting' })
-export class MeetingsGateway
+export class MeetingSocketGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private meetingService: MeetingsService) {}
+  constructor(
+    private meetingService: MeetingSocketService,
+    private authService: AuthService,
+  ) {}
 
   @WebSocketServer()
   server: Server;
 
-  async handleConnection(client: Socket, meetingId: string) {
+  async handleConnection(client: Socket) {
     const id = client.handshake.auth.meetingId as string;
+    const accessToken = client.handshake.auth.accessToken as string;
     const validMeetingId = await this.meetingService.doesMeetingExist(id);
 
     if (!validMeetingId) {
       throw new WsException('Invalid meeting id.');
     }
 
+    const user = accessToken
+      ? await this.authService.getUserFromToken(accessToken)
+      : null;
+
     client.join(id);
-    client.to(id).emit('userConnected');
-    console.log(`Client connected: ${client.id}`);
+    if (user) {
+      client
+        .to(id)
+        .emit(
+          'userConnected',
+          `${user.firstName} ${user.lastName} joined the meeting`,
+        );
+      console.log(`Client connected: ${user.email}`);
+    } else {
+      client.to(id).emit('userConnected', 'New user joined the meeting');
+      console.log(`Client connected: ${client.id}`);
+    }
     return;
   }
 
@@ -42,6 +60,14 @@ export class MeetingsGateway
     return this.server
       .to(meetingId)
       .emit('meetingUpdated', classToPlain(meeting));
+  }
+
+  emitMeetingDeleted(meetingId: string) {
+    this.server.to(meetingId).emit('meetingDeleted', 'Closing connection in 5');
+    setTimeout(
+      () => this.server.to(meetingId).disconnectSockets(true),
+      5 * 1000,
+    );
   }
 
   emitParticipantsUpdated(meetingId: string) {
