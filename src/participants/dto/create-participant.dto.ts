@@ -9,8 +9,7 @@ import { ParticipantRole } from '../../shared/enum/participant-role.enum';
 
 export class CreateParticipantDto {
   @IsString()
-  @IsOptional() // No need if it is created when create a meeting.
-  meetingId?: string;
+  meetingId: string;
 
   @IsEmail()
   @IsDefined()

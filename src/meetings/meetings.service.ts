@@ -11,7 +11,7 @@ export class MeetingsService {
     private meetingRepository: Repository<Meeting>,
   ) {}
 
-  public async findOneById(id: string) {
+  public async findOneById(id: string): Promise<Meeting> {
     return this.meetingRepository.findOne({ id });
   }
 
@@ -27,5 +27,9 @@ export class MeetingsService {
     });
     return this.meetingRepository.save(meetingToCreate);
     // return meetingToCreate;
+  }
+
+  public async doesMeetingExist(meetingUuid: string): Promise<boolean> {
+    return !!(await this.meetingRepository.findOne({ id: meetingUuid }));
   }
 }
