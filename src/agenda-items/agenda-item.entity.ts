@@ -1,5 +1,12 @@
 import { IsDefined } from 'class-validator';
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryColumn,
+  // PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Meeting } from '../meetings/meeting.entity';
 
 @Entity({ name: 'agendaItems' })

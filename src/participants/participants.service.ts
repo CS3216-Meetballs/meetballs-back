@@ -29,16 +29,4 @@ export class ParticipantsService {
     });
     return this.participantsRepository.save(participantToBeCreated);
   }
-
-  public async createParticipantsForMeeting(
-    createParticipantDto: CreateParticipantDto[],
-    meetingId: string,
-  ): Promise<Participant[]> {
-    const participantsToCreate: Participant[] = [];
-    createParticipantDto.forEach((participant) => {
-      participantsToCreate.push({ ...participant, meetingId });
-    });
-    // return this.participantsRepository.save(participantsToCreate);
-    return participantsToCreate;
-  }
 }

@@ -20,12 +20,12 @@ export class MeetingsService {
     hostId: string,
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { participants, agendaItems, ...rest } = createMeetingDto;
+    // const { participants, agendaItems, ...rest } = createMeetingDto;
     const meetingToCreate = this.meetingRepository.create({
-      ...rest,
+      ...createMeetingDto,
       hostId,
     });
-    // return this.meetingRepository.save(meetingToCreate);
-    return meetingToCreate;
+    return this.meetingRepository.save(meetingToCreate);
+    // return meetingToCreate;
   }
 }

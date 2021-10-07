@@ -13,6 +13,7 @@ import {
   ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
@@ -20,6 +21,7 @@ import { AgendaItem } from './agenda-item.entity';
 import { AgendaItemsService } from './agenda-items.service';
 import { CreateAgendaItemDto } from './dto/create-agenda-item.dto';
 import { UpdateAgendaItemDto } from './dto/update-agenda-item.dto';
+import { UpdateAgendaItemsPositionDto } from './dto/update-agenda-items-position.dto';
 
 @ApiTags('AgendaItem')
 @Controller('agenda-item')
@@ -43,16 +45,25 @@ export class AgendaItemsController {
     description: 'Successfully get agenda items',
     type: [AgendaItem],
   })
+  @ApiParam({
+    name: 'id',
+    description: 'The id of the meeting',
+  })
   @UseBearerAuth()
-  @Get('/:id')
+  @Get('/:meetingId')
   public async getAgendaItemsByMeetingId(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('meetingId', ParseUUIDPipe) meetingId: string,
   ): Promise<AgendaItem[]> {
-    return this.agendaItemsService.getAgendaItemsByMeetingId(id);
+    return this.agendaItemsService.getAgendaItemsByMeetingId(meetingId);
   }
 
   @ApiOkResponse({
     description: 'Successfully deleted agenda item',
+  })
+  @ApiParam({ name: 'meetingId', description: 'The id of the meeting' })
+  @ApiParam({
+    name: 'position',
+    description: 'The position of the agenda item',
   })
   @UseBearerAuth()
   @Delete('/:meetingId/:position')
@@ -69,17 +80,36 @@ export class AgendaItemsController {
   @ApiOkResponse({
     description: 'Successfully updated agenda item',
   })
+  @ApiBody({
+    type: UpdateAgendaItemDto,
+  })
   @UseBearerAuth()
   @Put('/:meetingId/:position')
   public async updateAgendaItemByPosition(
     @Param('meetingId', ParseUUIDPipe) meetingId: string,
-    @Param('position', ParseIntPipe) originalPosition: number,
+    @Param('position', ParseIntPipe) position: number,
     @Body() updateAgendaItemDto: UpdateAgendaItemDto,
   ): Promise<void> {
     await this.agendaItemsService.updateAgendaItemByMeetingIdAndPosition(
       meetingId,
-      originalPosition,
+      position,
       updateAgendaItemDto,
+    );
+  }
+
+  @ApiOkResponse({
+    description: 'Successfully reordered agenda items',
+  })
+  @ApiBody({
+    type: UpdateAgendaItemsPositionDto,
+  })
+  @UseBearerAuth()
+  @Put('/positions')
+  public async reorderAgendaItemsPosition(
+    @Body() updateAgendaItemsPositionDto: UpdateAgendaItemsPositionDto,
+  ): Promise<void> {
+    await this.agendaItemsService.reorderAgendaItemsPosition(
+      updateAgendaItemsPositionDto,
     );
   }
 }

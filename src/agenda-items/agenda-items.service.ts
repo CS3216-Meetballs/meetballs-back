@@ -1,13 +1,16 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { isNil } from 'lodash';
+import { In, MoreThan, Repository } from 'typeorm';
 import { AgendaItem } from './agenda-item.entity';
 import { CreateAgendaItemDto } from './dto/create-agenda-item.dto';
 import { UpdateAgendaItemDto } from './dto/update-agenda-item.dto';
+import { UpdateAgendaItemsPositionDto } from './dto/update-agenda-items-position.dto';
 
 @Injectable()
 export class AgendaItemsService {
@@ -37,18 +40,6 @@ export class AgendaItemsService {
     );
     await this.updateAgendaItemsPosition(meetingId, position);
     return createdAgendaItem;
-  }
-
-  public async createAgendaItemsForMeeting(
-    createAgendaItemDto: CreateAgendaItemDto[],
-    meetingId: string,
-  ): Promise<AgendaItem[]> {
-    const agendaItemsToCreate: AgendaItem[] = [];
-    createAgendaItemDto.forEach((agendaItem) => {
-      agendaItemsToCreate.push({ ...agendaItem, meetingId });
-    });
-    // return this.agendaItemRepository.save(agendaItemsToCreate);
-    return agendaItemsToCreate;
   }
 
   public async getAgendaItemsByMeetingId(
@@ -140,5 +131,50 @@ export class AgendaItemsService {
     } catch (err) {
       throw new BadRequestException(err.message);
     }
+  }
+
+  public async reorderAgendaItemsPosition(
+    updateAgendaItemsPositionDto: UpdateAgendaItemsPositionDto,
+  ): Promise<void> {
+    const { meetingId, positions } = updateAgendaItemsPositionDto;
+    const listOfOldPositions: number[] = [
+      ...new Set(
+        [...positions].map((position) => {
+          return position.oldPosition;
+        }),
+      ),
+    ];
+    const listOfNewPositions: number[] = [
+      ...new Set(
+        [...positions].map((position) => {
+          return position.newPosition;
+        }),
+      ),
+    ];
+    let agendaItemsToReorder = await this.agendaItemRepository.find({
+      meetingId,
+      position: In(listOfOldPositions),
+    });
+    if (
+      agendaItemsToReorder.length !== positions.length ||
+      listOfNewPositions.length !== positions.length
+    ) {
+      // Cause probably not user's fault but we forgot to consider some edge case.
+      throw new InternalServerErrorException('Error in positions array');
+    }
+    agendaItemsToReorder = agendaItemsToReorder.map((agendaItem) => {
+      const oldPosition = agendaItem.position;
+      const newPosition = positions.find(
+        (position) => position['oldPosition'] === oldPosition,
+      )['newPosition'];
+      if (isNil(newPosition)) {
+        throw new InternalServerErrorException();
+      }
+      return {
+        ...agendaItem,
+        position: newPosition,
+      };
+    });
+    await this.agendaItemRepository.save(agendaItemsToReorder);
   }
 }
