@@ -10,7 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-export class AgendaItemPosition {
+class AgendaItemPosition {
   @IsInt()
   @Min(0)
   @IsDefined()
@@ -31,7 +31,7 @@ export class UpdateAgendaItemsPositionDto {
   @Type(() => AgendaItemPosition)
   @ValidateNested({ each: true })
   @IsDefined()
-  @ArrayMinSize(2)
+  @ArrayMinSize(2) // If items are reordered, at least 2 items need to be swapped
   @ApiProperty({
     description: 'List of old and new positions of the agenda items',
     type: [AgendaItemPosition],
