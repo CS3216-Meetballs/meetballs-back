@@ -5,6 +5,7 @@ export class UpdateMeetingDto extends PartialType(
   PickType(CreateMeetingDto, [
     'name',
     'description',
+    'startedAt',
     'duration',
     'enableTranscription',
   ]),

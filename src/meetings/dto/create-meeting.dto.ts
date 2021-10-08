@@ -4,6 +4,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
+  IsDate,
   IsDefined,
   IsInt,
   IsNotEmpty,
@@ -35,6 +36,10 @@ export class CreateMeetingDto {
   @IsString()
   @IsOptional()
   description: string;
+
+  @IsDate()
+  @Type(() => Date)
+  startedAt: Date;
 
   @IsInt()
   @IsPositive()
