@@ -59,8 +59,8 @@ export class Meeting {
   })
   type: number;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  startedAt?: Date;
+  @Column({ type: 'timestamptz' })
+  startedAt: Date;
 
   @Column({ type: 'timestamptz', nullable: true })
   endedAt?: Date;

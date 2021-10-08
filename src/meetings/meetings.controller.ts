@@ -8,6 +8,8 @@ import {
   Put,
   Delete,
   Query,
+  ParseUUIDPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -50,12 +52,12 @@ export class MeetingsController {
 
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
   @Get('/:id')
-  public async getMeeting(@Param('id') meetingId: string) {
+  public async getMeeting(@Param('id', ParseUUIDPipe) meetingId: string) {
     try {
       const meeting = await this.meetingsService.findOneById(meetingId, true);
       return meeting;
     } catch (error) {
-      throw new BadRequestException('Invalid meeting id');
+      throw new NotFoundException('Meeting not found');
     }
   }
 
@@ -91,7 +93,7 @@ export class MeetingsController {
   @Put('/:id')
   public async updateMeeting(
     @Usr() requester: User,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateMeetingDto: UpdateMeetingDto,
   ) {
     const requesterId = requester.uuid;
@@ -110,7 +112,10 @@ export class MeetingsController {
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
   @UseBearerAuth()
   @Delete('/:id')
-  public async deleteMeeting(@Usr() requester: User, @Param('id') id: string) {
+  public async deleteMeeting(
+    @Usr() requester: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     const requesterId = requester.uuid;
     await this.meetingsService.deleteMeeting(id, requesterId);
     this.meetingGateway.emitMeetingDeleted(id);
@@ -123,7 +128,10 @@ export class MeetingsController {
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
   @UseBearerAuth()
   @Post('/start/:id')
-  public async startMeeting(@Usr() requester: User, @Param('id') id: string) {
+  public async startMeeting(
+    @Usr() requester: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     const requesterId = requester.uuid;
     const meeting = await this.meetingsService.startMeeting(id, requesterId);
     this.meetingGateway.emitMeetingUpdated(id, meeting);
@@ -138,7 +146,7 @@ export class MeetingsController {
   @Post('/next/:id')
   public async nextMeetingItem(
     @Usr() requester: User,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     const requesterId = requester.uuid;
     const meeting = await this.meetingsService.nextMeetingItem(id, requesterId);
@@ -152,7 +160,10 @@ export class MeetingsController {
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
   @UseBearerAuth()
   @Post('/end/:id')
-  public async endMeeting(@Usr() requester: User, @Param('id') id: string) {
+  public async endMeeting(
+    @Usr() requester: User,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     const requesterId = requester.uuid;
     const meeting = await this.meetingsService.endMeeting(id, requesterId);
     this.meetingGateway.emitMeetingUpdated(id, meeting);

@@ -30,11 +30,12 @@ export class MeetingsSeeder implements ISeeder {
       id: '10c7e0a8-120b-45e0-a37f-be92170bfb8d',
       name: 'Seeded meeting',
       description: 'Seeded meeting',
+      startedAt: Date.now(),
       duration: 60,
       host: user,
       meetingId: '123456',
-      startUrl: 'www.example.com',
-      joinUrl: 'www.example.com',
+      startUrl: 'https://www.example.com',
+      joinUrl: 'https://www.example.com',
       agendaItems: [
         {
           position: 1,
