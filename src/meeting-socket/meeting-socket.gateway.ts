@@ -25,15 +25,15 @@ export class MeetingSocketGateway
 
   async handleConnection(client: Socket) {
     const id = client.handshake.auth.meetingId as string;
-    const accessToken = client.handshake.auth.accessToken as string;
-    const validMeetingId = await this.meetingService.doesMeetingExist(id);
+    const accessToken = client.handshake.auth.token as string;
+    // const validMeetingId = await this.meetingService.doesMeetingExist(id);
 
-    if (!validMeetingId) {
-      throw new WsException('Invalid meeting id.');
-    }
+    // if (!validMeetingId) {
+    //   throw new WsException('Invalid meeting id.');
+    // }
 
     const user = accessToken
-      ? await this.authService.getUserFromToken(accessToken)
+      ? await this.authService.getUserFromToken(accessToken).catch(() => null)
       : null;
 
     client.join(id);
@@ -44,10 +44,10 @@ export class MeetingSocketGateway
           'userConnected',
           `${user.firstName} ${user.lastName} joined the meeting`,
         );
-      console.log(`Client connected: ${user.email}`);
+      console.log(`Client ${user.email} connected to ${id}`);
     } else {
       client.to(id).emit('userConnected', 'New user joined the meeting');
-      console.log(`Client connected: ${client.id}`);
+      console.log(`Client ${client.id} connected to ${id}`);
     }
     return;
   }

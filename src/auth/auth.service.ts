@@ -53,7 +53,7 @@ export class AuthService {
     try {
       payload = this.jwtService.verify<TokenPayload>(accessToken, {
         ignoreExpiration: false,
-        secret: this.jwtConfigService.mailVerifyTokenOptions.secret,
+        secret: this.jwtConfigService.accessTokenOptions.secret,
       });
     } catch (error) {
       throw new BadRequestException('Invalid token');
