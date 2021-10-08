@@ -41,7 +41,6 @@ export class MeetingsService {
             hostId: requesterId,
             type: Any([ZoomMeetingStatus.WAITING, ZoomMeetingStatus.STARTED]),
           };
-
     return this.meetingRepository.find(findCondition);
   }
 

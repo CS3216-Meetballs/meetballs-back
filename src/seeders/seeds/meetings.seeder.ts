@@ -20,8 +20,11 @@ export class MeetingsSeeder implements ISeeder {
     const user = await this.userRepository.findOne({
       email: `admin@email.com`,
     });
-    const meetingId = '10c7e0a8-120b-45e0-a37f-be92170bfb8d'
+    const meetingId = '10c7e0a8-120b-45e0-a37f-be92170bfb8d';
     const meeting = await this.meetingRepository.findOne({ id: meetingId });
+    if (!meeting) {
+      return;
+    }
     await this.meetingRepository.remove(meeting);
     return this.meetingRepository.save({
       id: '10c7e0a8-120b-45e0-a37f-be92170bfb8d',
