@@ -24,8 +24,10 @@ class UpdateParticipant {
     enum: ParticipantRole,
     description: 'CONFERENCE_MEMBER=1, ADMIN=2',
   })
-  @IsEnum(ParticipantRole)
-  role?: number;
+  @IsEnum(ParticipantRole, {
+    message: 'Role should either be 1 for CONFERENCE_MEMBER, or 2 for ADMIN',
+  })
+  role?: ParticipantRole;
 
   @IsOptional()
   @IsString()

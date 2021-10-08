@@ -11,8 +11,10 @@ import {
   IsPositive,
   IsString,
   IsUrl,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { isNil } from 'lodash';
 import { CreateAgendaItemDto } from '../../agenda-items/dto/create-agenda-item.dto';
 import { CreateParticipantDto } from '../../participants/dto/create-participant.dto';
 
@@ -58,6 +60,7 @@ export class CreateMeetingDto {
   @IsBoolean()
   enableTranscription: boolean;
 
+  @ValidateIf((obj) => !isNil(obj.participants))
   @IsArray()
   @Type(() => CreateParticipantMinimalDto)
   @IsDefined()
@@ -69,6 +72,7 @@ export class CreateMeetingDto {
   })
   participants: CreateParticipantMinimalDto[];
 
+  @ValidateIf((obj) => !isNil(obj.agendaItems))
   @IsArray()
   @Type(() => CreateAgendaItemMinimalDto)
   @IsDefined()
