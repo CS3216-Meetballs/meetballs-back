@@ -7,6 +7,7 @@ import {
   IsEmail,
   IsEnum,
   IsOptional,
+  IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
@@ -21,13 +22,19 @@ export class CreateParticipantDto {
   @IsDefined()
   userEmail: string;
 
+  @IsString()
+  @IsOptional()
+  username?: string;
+
   @IsOptional()
   @ApiProperty({
     enum: ParticipantRole,
     description: 'CONFERENCE_MEMBER=1, ADMIN=2',
   })
-  @IsEnum(ParticipantRole)
-  role?: number;
+  @IsEnum(ParticipantRole, {
+    message: 'Role should either be 1 for CONFERENCE_MEMBER, or 2 for ADMIN',
+  })
+  role?: ParticipantRole;
 }
 
 export class CreateParticipantsDto {
