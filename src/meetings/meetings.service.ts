@@ -177,7 +177,7 @@ export class MeetingsService {
     const nextAgenda = agendaItems[activePosition + 1];
     currAgenda.isCurrent = false;
     currAgenda.actualDuration =
-      (currTime.getTime() - currAgenda.startTime.getTime()) * 1000;
+      currTime.getTime() - currAgenda.startTime.getTime();
 
     nextAgenda.isCurrent = true;
     nextAgenda.startTime = currTime;
@@ -218,7 +218,7 @@ export class MeetingsService {
         const lastAgendaItem = lastAgendaItemList[0];
         lastAgendaItem.isCurrent = false;
         lastAgendaItem.actualDuration =
-          (currTime.getTime() - lastAgendaItem.startTime.getTime()) * 1000;
+          currTime.getTime() - lastAgendaItem.startTime.getTime();
         await this.agendaRepository.save(lastAgendaItem);
       }
     }

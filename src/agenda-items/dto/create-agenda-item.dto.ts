@@ -26,6 +26,7 @@ export class CreateAgendaItemDto {
   @IsOptional()
   description?: string;
 
+  // duration in milliseconds
   @IsInt()
   @IsPositive()
   @IsDefined()
