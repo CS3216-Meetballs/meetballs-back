@@ -45,7 +45,12 @@ export class ParticipantsController {
   public async createParticipants(
     @Body() createParticipantsDto: CreateParticipantsDto,
   ): Promise<Participant[]> {
-    return this.participantsService.createParticipants(createParticipantsDto);
+    const createdParticipants =
+      await this.participantsService.createParticipants(createParticipantsDto);
+    this.meetingGateway.emitParticipantsUpdated(
+      createdParticipants[0].meetingId,
+    );
+    return createdParticipants;
   }
 
   @ApiOkResponse({
