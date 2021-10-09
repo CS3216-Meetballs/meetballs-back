@@ -86,13 +86,13 @@ export class ParticipantsService {
       participantsToUpdate = participantsToUpdate.map((partcipant) => {
         const { userEmail } = partcipant;
         const {
-          username: newUsername,
+          userName: newUsername,
           role: newRole,
           timeJoined: newTimeJoined,
         } = participants.find((p) => p.userEmail === userEmail);
         return {
           ...partcipant,
-          ...(newUsername && { username: newUsername }),
+          ...(newUsername && { userName: newUsername }),
           ...(newRole && { role: newRole }),
           ...(newTimeJoined && { timeJoined: newTimeJoined }),
         };
