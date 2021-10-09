@@ -7,6 +7,7 @@ import {
   IsDefined,
   IsEmail,
   IsEnum,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -24,6 +25,12 @@ class UpdateParticipant {
     enum: ParticipantRole,
     description: 'CONFERENCE_MEMBER=1, ADMIN=2',
   })
+  @IsNumber(
+    {},
+    {
+      message: 'Role should either be 1 for CONFERENCE_MEMBER, or 2 for ADMIN',
+    },
+  )
   @IsEnum(ParticipantRole, {
     message: 'Role should either be 1 for CONFERENCE_MEMBER, or 2 for ADMIN',
   })
