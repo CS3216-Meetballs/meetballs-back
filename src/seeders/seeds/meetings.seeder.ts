@@ -51,10 +51,12 @@ export class MeetingsSeeder implements ISeeder {
       ],
       participants: [
         {
+          userName: user.firstName,
           userEmail: user.email,
           role: ParticipantRole.ADMIN,
         },
         {
+          userName: 'user1',
           userEmail: 'user1@email.com',
           role: ParticipantRole.ADMIN,
         },

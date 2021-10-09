@@ -19,7 +19,7 @@ export class Participant {
   userEmail: string;
 
   @Column({ type: 'varchar', nullable: true })
-  username?: string;
+  userName?: string;
 
   @Column({ type: 'timestamptz', nullable: true })
   timeJoined?: Date;
