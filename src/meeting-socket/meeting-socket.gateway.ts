@@ -60,7 +60,7 @@ export class MeetingSocketGateway
   emitMeetingUpdated(meetingId: string, meeting: Meeting) {
     return this.server
       .to(meetingId)
-      .emit('meetingUpdated', classToPlain(meeting));
+      .emit('meetingUpdated', JSON.stringify(classToPlain(meeting)));
   }
 
   emitMeetingDeleted(meetingId: string) {
@@ -77,7 +77,7 @@ export class MeetingSocketGateway
   ) {
     return this.server
       .to(meetingId)
-      .emit('participantUpdated', classToPlain(participant));
+      .emit('participantUpdated', JSON.stringify(classToPlain(participant)));
   }
 
   emitAgendaUpdated(meetingId: string) {
