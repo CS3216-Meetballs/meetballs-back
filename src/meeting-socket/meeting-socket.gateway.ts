@@ -1,3 +1,4 @@
+import { Participant } from './../participants/participant.entity';
 import { MeetingSocketService } from './meeting-socket.service';
 import { AuthService } from '../auth/auth.service';
 import {
@@ -70,8 +71,13 @@ export class MeetingSocketGateway
     );
   }
 
-  emitParticipantsUpdated(meetingId: string) {
-    return this.server.to(meetingId).emit('participantUpdated');
+  emitParticipantsUpdated(
+    meetingId: string,
+    participant: Participant | Participant[],
+  ) {
+    return this.server
+      .to(meetingId)
+      .emit('participantUpdated', classToPlain(participant));
   }
 
   emitAgendaUpdated(meetingId: string) {

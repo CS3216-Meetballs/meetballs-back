@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import {
@@ -6,6 +10,7 @@ import {
   CreateParticipantsDto,
 } from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
+import { ParticipantEmailDto } from './dto/participant-email.dto';
 import { UpdateParticipantsDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 
@@ -102,5 +107,39 @@ export class ParticipantsService {
     meetingId: string,
   ): Promise<Participant[]> {
     return this.participantsRepository.find({ meetingId });
+  }
+
+  public async markPresent(
+    meetingId: string,
+    participantEmailDto: ParticipantEmailDto,
+  ): Promise<Participant> {
+    const participant = await this.participantsRepository.findOne({
+      meetingId,
+      userEmail: participantEmailDto.email,
+    });
+    if (!participant) {
+      throw new NotFoundException('Participant not found');
+    }
+
+    participant.timeJoined = new Date();
+    await this.participantsRepository.save(participant);
+    return participant;
+  }
+
+  public async markAbsent(
+    meetingId: string,
+    participantEmailDto: ParticipantEmailDto,
+  ): Promise<Participant> {
+    const participant = await this.participantsRepository.findOne({
+      meetingId,
+      userEmail: participantEmailDto.email,
+    });
+    if (!participant) {
+      throw new NotFoundException('Participant not found');
+    }
+
+    participant.timeJoined = null;
+    await this.participantsRepository.save(participant);
+    return participant;
   }
 }

@@ -26,6 +26,7 @@ import { UpdateParticipantsDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { ParticipantsService } from './participants.service';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
+import { ParticipantEmailDto } from './dto/participant-email.dto';
 
 @ApiTags('Participant')
 @Controller('participant')
@@ -49,6 +50,7 @@ export class ParticipantsController {
       await this.participantsService.createParticipants(createParticipantsDto);
     this.meetingGateway.emitParticipantsUpdated(
       createdParticipants[0].meetingId,
+      createdParticipants,
     );
     return createdParticipants;
   }
@@ -111,8 +113,45 @@ export class ParticipantsController {
       .then((participant) => {
         this.meetingGateway.emitParticipantsUpdated(
           createParticipantDto.meetingId,
+          participant,
         );
         return participant;
+      });
+  }
+
+  @ApiCreatedResponse({
+    description: 'Successfully marked participant as present',
+  })
+  @UseBearerAuth()
+  @ApiBody({ type: ParticipantEmailDto })
+  @Put('/:meetingId/present')
+  public async markPresent(
+    @Param('meetingId', ParseUUIDPipe) meetingId: string,
+    @Body() participantEmail: ParticipantEmailDto,
+  ): Promise<void> {
+    return this.participantsService
+      .markPresent(meetingId, participantEmail)
+      .then((participant) => {
+        this.meetingGateway.emitParticipantsUpdated(meetingId, participant);
+        return;
+      });
+  }
+
+  @ApiCreatedResponse({
+    description: 'Successfully marked participant as absent',
+  })
+  @UseBearerAuth()
+  @ApiBody({ type: ParticipantEmailDto })
+  @Put('/:meetingId/absent')
+  public async markAbsent(
+    @Param('meetingId', ParseUUIDPipe) meetingId: string,
+    @Body() participantEmail: ParticipantEmailDto,
+  ): Promise<void> {
+    return this.participantsService
+      .markAbsent(meetingId, participantEmail)
+      .then((participant) => {
+        this.meetingGateway.emitParticipantsUpdated(meetingId, participant);
+        return;
       });
   }
 }
