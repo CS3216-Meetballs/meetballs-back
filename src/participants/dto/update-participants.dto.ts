@@ -31,7 +31,7 @@ class UpdateParticipant {
 
   @IsOptional()
   @IsString()
-  username?: string;
+  userName?: string;
 
   @IsOptional()
   @IsDate()

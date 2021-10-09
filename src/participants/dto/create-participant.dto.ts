@@ -24,7 +24,7 @@ export class CreateParticipantDto {
 
   @IsString()
   @IsOptional()
-  username?: string;
+  userName?: string;
 
   @IsOptional()
   @ApiProperty({
