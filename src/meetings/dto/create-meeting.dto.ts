@@ -70,7 +70,6 @@ export class CreateMeetingDto {
   @Type(() => CreateParticipantMinimalDto)
   @IsDefined()
   @ValidateNested({ each: true })
-  @ArrayMinSize(1) // should at least contain the 1 participant (the host)
   @ApiProperty({
     description: 'List of participants for the meeting',
     type: [CreateParticipantMinimalDto],
@@ -82,7 +81,6 @@ export class CreateMeetingDto {
   @Type(() => CreateAgendaItemMinimalDto)
   @IsDefined()
   @ValidateNested({ each: true })
-  @ArrayMinSize(1)
   @ApiProperty({
     description: 'List of agenda items for the meeting',
     type: [CreateAgendaItemMinimalDto],
