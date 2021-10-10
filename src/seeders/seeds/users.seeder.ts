@@ -18,7 +18,7 @@ export class UsersSeeder implements ISeeder {
       return this.userRepository.create({
         uuid: '10c7e0a8-120b-45e0-a37f-be92170bfb8d',
         firstName: subject,
-        lastName: subject,
+        lastName: 'User',
         passwordHash,
         email: `${subject}@email.com`,
         isEmailConfirmed: true,
@@ -33,7 +33,7 @@ export class UsersSeeder implements ISeeder {
     userPromises.push(adminPromise);
     return Promise.all(userPromises).then((users) => {
       return this.userRepository
-        .save(users, {})
+        .save(users)
         .finally(() => console.log('* Seeded users...'));
     });
   }
