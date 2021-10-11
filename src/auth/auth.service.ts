@@ -160,7 +160,7 @@ export class AuthService {
     console.log('Password reset token:', token);
     return this.mailService.sendPasswordReset(
       user,
-      `${this.appConfigService.clientUrl}/app/password-reset?token=${token}`,
+      `${this.appConfigService.clientUrl}/password-reset?token=${token}`,
     );
   }
 
