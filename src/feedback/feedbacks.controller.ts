@@ -4,7 +4,7 @@ import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { Feedback } from './feedback.entity';
 import { FeedbacksService } from './feedbacks.service';
 
-@ApiTags('Participant')
+@ApiTags('Feedback')
 @Controller('feedback')
 export class FeedbacksController {
   constructor(private readonly feedbacksService: FeedbacksService) {}
