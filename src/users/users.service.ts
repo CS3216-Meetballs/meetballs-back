@@ -1,9 +1,10 @@
-import { ChangeNameDto } from './dto/change-name.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { User } from './user.entity';
 import { ZoomUser } from '../shared/interface/zoom-user.interface';
+import { ChangeNameDto } from './dto/change-name.dto';
 
 @Injectable()
 export class UsersService {
@@ -36,28 +37,29 @@ export class UsersService {
     return this.userRepository.save(partialUser);
   }
 
-  updateZoomUser(zoomUser: ZoomUser): Promise<User> {
+  async updateZoomUser(zoomUser: ZoomUser): Promise<User> {
     const {
       id,
       first_name,
       last_name,
       email,
       type,
-      language,
-      pic_url,
-      account_id,
-      status,
+      // language,
+      // pic_url,
+      // account_id,
+      // status,
     } = zoomUser;
     console.log(zoomUser);
-    const partialUser = this.userRepository.create({
+    const updates = {
       zoomId: id,
       email,
       isEmailConfirmed: true,
       firstName: first_name,
       lastName: last_name,
       type: type,
-    });
-    return this.userRepository.save(partialUser);
+    };
+    const existingUser = (await this.userRepository.findOne({ email })) || {};
+    return this.userRepository.save({ ...existingUser, ...updates });
   }
 
   async updateName(uuid: string, changeNameDto: ChangeNameDto): Promise<User> {

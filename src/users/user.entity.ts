@@ -1,7 +1,6 @@
 import { ApiHideProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsEmail } from 'class-validator';
-import { ZoomAccountType } from '../shared/enum/zoom-type.enum';
 import {
   PrimaryGeneratedColumn,
   Column,
@@ -11,7 +10,9 @@ import {
   Entity,
   OneToMany,
 } from 'typeorm';
+
 import { Meeting } from '../meetings/meeting.entity';
+import { ZoomAccountType } from '../shared/enum/zoom-type.enum';
 
 @Entity({ name: 'users' })
 export class User {

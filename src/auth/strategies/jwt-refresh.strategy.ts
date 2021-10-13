@@ -7,10 +7,7 @@ import * as bcrypt from 'bcrypt';
 
 import { UsersService } from '../../users/users.service';
 import { JwtConfigService } from '../../config/jwt.config';
-import {
-  TokenPayload,
-  ZoomTokenPayload,
-} from '../../shared/interface/token-payload.interface';
+import { TokenPayload } from '../../shared/interface/token-payload.interface';
 import { User } from '../../users/user.entity';
 
 @Injectable()
@@ -28,38 +25,26 @@ export class JwtRefreshStrategy extends PassportStrategy(
 
   async validate(request: Request): Promise<User> {
     const refreshToken = request.query['refresh_token'] as string;
-    const payload = this.jwtService.decode(refreshToken, { json: true }) as
-      | TokenPayload
-      | ZoomTokenPayload;
+    const payload = await this.validateJwt(refreshToken);
 
     const { userId, tokenType } = payload;
 
-    let user: User;
-    if (payload['authType'] === 'email') {
-      await this.validateJwt(refreshToken);
-      user = await this.usersService.findByZoomId(userId);
-    } else {
-      user = await this.usersService.findByUuid(userId);
-      const isTokenMatch = await bcrypt.compare(
-        refreshToken,
-        user?.refreshTokenHash || '',
-      );
+    const user = await this.usersService.findByUuid(userId);
+    const isTokenMatch = await bcrypt.compare(
+      refreshToken,
+      user?.refreshTokenHash || '',
+    );
 
-      if (!isTokenMatch) {
-        throw new UnauthorizedException();
-      }
-    }
-
-    if (!user || tokenType !== 'refresh_token') {
+    if (!user || tokenType !== 'refresh_token' || !isTokenMatch) {
       throw new UnauthorizedException();
     }
 
     return user;
   }
 
-  private async validateJwt(jwtToken: string) {
+  private async validateJwt(jwtToken: string): Promise<TokenPayload> {
     try {
-      this.jwtService.verify<TokenPayload>(jwtToken, {
+      return this.jwtService.verify<TokenPayload>(jwtToken, {
         ignoreExpiration: false,
         secret: this.jwtConfigService.refreshTokenOptions.secret,
       });
