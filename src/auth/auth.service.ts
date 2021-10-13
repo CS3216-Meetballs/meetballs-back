@@ -42,7 +42,7 @@ export class AuthService {
     // );
   }
 
-  getToken(code: string): Observable<JwtResponseDto & { scope: string }> {
+  getZoomToken(code: string): Observable<JwtResponseDto & { scope: string }> {
     console.log(code);
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
@@ -52,7 +52,9 @@ export class AuthService {
     return this.makeTokenRequest(params);
   }
 
-  refreshToken(token: string): Observable<JwtResponseDto & { scope: string }> {
+  refreshZoomToken(
+    token: string,
+  ): Observable<JwtResponseDto & { scope: string }> {
     const params = new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: token,
@@ -77,6 +79,7 @@ export class AuthService {
           return result.data;
         }),
         catchError((e) => {
+          console.log(e);
           throw new HttpException(e.response.data, e.response.status);
         }),
       );
@@ -118,7 +121,6 @@ export class AuthService {
   ): Pick<JwtResponseDto, 'access_token' | 'expires_in'> {
     const payload: TokenPayload = {
       userId: user.uuid,
-      authType: 'email',
       tokenType: 'access_token',
     };
     const jwtOptions = this.jwtConfigService.accessTokenOptions;
@@ -133,7 +135,6 @@ export class AuthService {
   getJwtRefreshToken(user: User): string {
     const payload: TokenPayload = {
       userId: user.uuid,
-      authType: 'email',
       tokenType: 'refresh_token',
     };
     const refreshOptions = this.jwtConfigService.refreshTokenOptions;

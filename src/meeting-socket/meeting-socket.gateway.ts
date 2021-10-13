@@ -41,10 +41,7 @@ export class MeetingSocketGateway
     if (user) {
       client
         .to(id)
-        .emit(
-          'userConnected',
-          `${user.firstName} ${user.lastName} joined the meeting`,
-        );
+        .emit('userConnected', `${user.firstName} joined the meeting`);
       console.log(`Client ${user.email} connected to ${id}`);
     } else {
       client.to(id).emit('userConnected', 'New user joined the meeting');

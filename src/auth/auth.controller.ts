@@ -253,7 +253,7 @@ export class AuthController {
   })
   @Post('/zoom/login')
   getToken(@Query('code') code: string): Observable<JwtResponseDto> {
-    return this.authService.getToken(code).pipe(
+    return this.authService.getZoomToken(code).pipe(
       map((tokenData) => {
         const { scope, ...tokenOutput } = tokenData;
         return tokenOutput;
@@ -272,11 +272,10 @@ export class AuthController {
     description: 'The zoom refresh token',
   })
   @Post('/zoom/refresh')
-  @UseAuth(JwtRefreshGuard)
   refreshToken(
     @Query('refresh_token') token: string,
   ): Observable<JwtResponseDto> {
-    return this.authService.refreshToken(token).pipe(
+    return this.authService.refreshZoomToken(token).pipe(
       map(
         (tokenData) => {
           const { scope, ...tokenOutput } = tokenData;
