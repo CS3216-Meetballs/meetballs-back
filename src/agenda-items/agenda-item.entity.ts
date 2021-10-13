@@ -37,4 +37,10 @@ export class AgendaItem {
 
   @Column({ type: 'boolean', default: false })
   isCurrent?: boolean;
+
+  @Column({ type: 'varchar', nullable: true })
+  speakerName?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  speakerMaterials?: string;
 }

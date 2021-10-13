@@ -50,9 +50,15 @@ export class MeetingsController {
     return meeting;
   }
 
+  @ApiOkResponse({
+    description: 'Successfully retrieved meeting',
+    type: Meeting,
+  })
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
   @Get('/:id')
-  public async getMeeting(@Param('id', ParseUUIDPipe) meetingId: string) {
+  public async getMeeting(
+    @Param('id', ParseUUIDPipe) meetingId: string,
+  ): Promise<Meeting> {
     try {
       const meeting = await this.meetingsService.findOneById(meetingId, true);
       return meeting;

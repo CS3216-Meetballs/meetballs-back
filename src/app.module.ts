@@ -13,6 +13,7 @@ import { ParticipantsModule } from './participants/participants.module';
 import { SeederModule } from './seeders/seeder.module';
 import { MeetingSocketModule } from './meeting-socket/meeting-socket.module';
 import { ZoomModule } from './zoom/zoom.module';
+import { FeedbacksModule } from './feedback/feedbacks.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ZoomModule } from './zoom/zoom.module';
     ParticipantsModule,
     SeederModule,
     ZoomModule,
+    FeedbacksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
