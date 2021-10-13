@@ -6,11 +6,19 @@ import { jwtConfig, JwtConfigService } from './jwt.config';
 import { SeederConfigService, seederConfig } from './seeder.config';
 import validationSchema from './config.schema';
 import { mailConfig, MailConfigService } from './mail.config';
+import { ZoomConfigService, zoomConfig } from './zoom.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [appConfig, databaseConfig, jwtConfig, seederConfig, mailConfig],
+      load: [
+        appConfig,
+        databaseConfig,
+        jwtConfig,
+        seederConfig,
+        mailConfig,
+        zoomConfig,
+      ],
       validationSchema: validationSchema,
     }),
   ],
@@ -20,6 +28,7 @@ import { mailConfig, MailConfigService } from './mail.config';
     JwtConfigService,
     SeederConfigService,
     MailConfigService,
+    ZoomConfigService,
   ],
   exports: [
     ConfigModule,
@@ -28,6 +37,7 @@ import { mailConfig, MailConfigService } from './mail.config';
     JwtConfigService,
     SeederConfigService,
     MailConfigService,
+    ZoomConfigService,
   ],
 })
 export class AppConfigModule {}

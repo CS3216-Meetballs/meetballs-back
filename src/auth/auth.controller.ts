@@ -1,5 +1,13 @@
+import { map, Observable, catchError } from 'rxjs';
 import { JwtResponseDto } from './dtos/jwt-response.dto';
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Query,
+  UnauthorizedException,
+  HttpException,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiCreatedResponse,
@@ -234,5 +242,50 @@ export class AuthController {
       success: true,
       message: 'Password successfully changed',
     };
+  }
+
+  /**
+   * Login to zoom account by requesting access token
+   */
+  @ApiQuery({
+    name: 'code',
+    description: 'The authorization code provided by /zoom/authorize',
+  })
+  @Post('/zoom/login')
+  getToken(@Query('code') code: string): Observable<JwtResponseDto> {
+    return this.authService.getToken(code).pipe(
+      map((tokenData) => {
+        const { scope, ...tokenOutput } = tokenData;
+        return tokenOutput;
+      }),
+      catchError((err: HttpException) => {
+        throw new UnauthorizedException(err.getResponse());
+      }),
+    );
+  }
+
+  /**
+   * Request a new access token
+   */
+  @ApiQuery({
+    name: 'refresh_token',
+    description: 'The zoom refresh token',
+  })
+  @Post('/zoom/refresh')
+  @UseAuth(JwtRefreshGuard)
+  refreshToken(
+    @Query('refresh_token') token: string,
+  ): Observable<JwtResponseDto> {
+    return this.authService.refreshToken(token).pipe(
+      map(
+        (tokenData) => {
+          const { scope, ...tokenOutput } = tokenData;
+          return tokenOutput;
+        },
+        catchError((err: HttpException) => {
+          throw new UnauthorizedException(err.getResponse());
+        }),
+      ),
+    );
   }
 }

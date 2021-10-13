@@ -23,4 +23,7 @@ export default Joi.object({
   EMAIL_PORT: Joi.number().required(), // 587
   EMAIL_ID: Joi.string().required(), // user@outlook.com
   EMAIL_PASS: Joi.string().required(), // password
+
+  ZOOM_CLIENT_ID: Joi.string().required(),
+  ZOOM_CLIENT_SECRET: Joi.string().required(),
 });

@@ -39,9 +39,12 @@ export class User {
   })
   type: number;
 
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  zoomId: string;
+
   @Exclude()
   @ApiHideProperty()
-  @Column('varchar')
+  @Column('varchar', { nullable: true })
   passwordHash: string;
 
   @Exclude()
