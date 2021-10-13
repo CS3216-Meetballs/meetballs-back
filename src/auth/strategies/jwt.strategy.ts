@@ -50,12 +50,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         }),
       ),
     );
-    console.log(zoomUser);
 
     const user = await this.usersService.findByZoomId(zoomUser.id);
-    if (!user) {
-      return await this.usersService.createUserFromZoom(zoomUser);
-    }
     return user;
   }
 

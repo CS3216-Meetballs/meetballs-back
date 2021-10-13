@@ -1,6 +1,13 @@
-import { map, Observable } from 'rxjs';
+import { map, Observable, catchError } from 'rxjs';
 import { JwtResponseDto } from './dtos/jwt-response.dto';
-import { Body, Controller, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Query,
+  UnauthorizedException,
+  HttpException,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiCreatedResponse,
@@ -251,6 +258,9 @@ export class AuthController {
         const { scope, ...tokenOutput } = tokenData;
         return tokenOutput;
       }),
+      catchError((err: HttpException) => {
+        throw new UnauthorizedException(err.getResponse());
+      }),
     );
   }
 
@@ -262,15 +272,20 @@ export class AuthController {
     description: 'The zoom refresh token',
   })
   @Post('/zoom/refresh')
+  @UseAuth(JwtRefreshGuard)
   refreshToken(
     @Query('refresh_token') token: string,
   ): Observable<JwtResponseDto> {
     return this.authService.refreshToken(token).pipe(
-      map((tokenData) => {
-        // this.authService.saveRefreshToken(tokenData.refresh_token);
-        const { scope, ...tokenOutput } = tokenData;
-        return tokenOutput;
-      }),
+      map(
+        (tokenData) => {
+          const { scope, ...tokenOutput } = tokenData;
+          return tokenOutput;
+        },
+        catchError((err: HttpException) => {
+          throw new UnauthorizedException(err.getResponse());
+        }),
+      ),
     );
   }
 }
