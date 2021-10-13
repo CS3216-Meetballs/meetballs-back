@@ -36,7 +36,7 @@ export class UsersService {
     return this.userRepository.save(partialUser);
   }
 
-  createUserFromZoom(zoomUser: ZoomUser): Promise<User> {
+  updateZoomUser(zoomUser: ZoomUser): Promise<User> {
     const {
       id,
       first_name,
@@ -48,6 +48,7 @@ export class UsersService {
       account_id,
       status,
     } = zoomUser;
+    console.log(zoomUser);
     const partialUser = this.userRepository.create({
       zoomId: id,
       email,

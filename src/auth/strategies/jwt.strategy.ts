@@ -51,8 +51,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       ),
     );
 
-    const user = await this.usersService.findByZoomId(zoomUser.id);
-    return user;
+    // const user = await this.usersService.findByZoomId(zoomUser.id);
+    // if (!user) {
+    return await this.usersService.updateZoomUser(zoomUser);
+    // }
+    // return user;
   }
 
   private async validateLocal(jwtToken: string): Promise<User> {
