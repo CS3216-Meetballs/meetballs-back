@@ -43,5 +43,5 @@ export class UpdateAgendaItemDto {
 
   @IsUrl()
   @IsOptional()
-  speakermaterials: string;
+  speakerMaterials: string;
 }
