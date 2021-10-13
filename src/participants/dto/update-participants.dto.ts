@@ -22,10 +22,11 @@ class UpdateParticipant {
   @IsOptional()
   @ApiProperty({
     enum: ParticipantRole,
-    description: 'CONFERENCE_MEMBER=1, ADMIN=2',
+    description: 'CONFERENCE_MEMBER=1, ADMIN=2, SPEAKER=3',
   })
   @IsEnum(ParticipantRole, {
-    message: 'Role should either be 1 for CONFERENCE_MEMBER, or 2 for ADMIN',
+    message:
+      'Role should either be 1 for CONFERENCE_MEMBER, or 2 for ADMIN, or 3 for SPEAKER',
   })
   role?: ParticipantRole;
 
