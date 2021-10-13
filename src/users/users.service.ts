@@ -3,6 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
+import { ZoomUser } from '../shared/interface/zoom-user.interface';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,10 @@ export class UsersService {
 
   findByUuid(uuid: string): Promise<User> {
     return this.userRepository.findOne({ uuid });
+  }
+
+  findByZoomId(zoomId: string): Promise<User> {
+    return this.userRepository.findOne({ zoomId });
   }
 
   findByEmail(email: string): Promise<User> {
@@ -28,6 +33,29 @@ export class UsersService {
     user: Pick<User, 'firstName' | 'lastName' | 'email' | 'passwordHash'>,
   ): Promise<User> {
     const partialUser = this.userRepository.create(user);
+    return this.userRepository.save(partialUser);
+  }
+
+  createUserFromZoom(zoomUser: ZoomUser): Promise<User> {
+    const {
+      id,
+      first_name,
+      last_name,
+      email,
+      type,
+      language,
+      pic_url,
+      account_id,
+      status,
+    } = zoomUser;
+    const partialUser = this.userRepository.create({
+      zoomId: id,
+      email,
+      isEmailConfirmed: true,
+      firstName: first_name,
+      lastName: last_name,
+      type: type,
+    });
     return this.userRepository.save(partialUser);
   }
 

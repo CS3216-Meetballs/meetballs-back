@@ -1,25 +1,29 @@
+import { HttpService } from '@nestjs/axios';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { catchError, map, Observable } from 'rxjs';
 
 import { CreateUserDto } from './dtos/create-user.dto';
 import { JwtConfigService } from '../config/jwt.config';
 import { User } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
 import { JwtResponseDto } from './dtos/jwt-response.dto';
-import { TokenPayload } from './interface/token-payload.interface';
 import { AppConfigService } from '../config/app.config';
 import { MailService } from '../mail/mail.service';
-import { EmailConfirmPayload } from './interface/confirm-payload.interface';
-import { PasswordResetPayload } from './interface/reset-payload.interface';
+import { TokenPayload } from '../shared/interface/token-payload.interface';
+import { EmailConfirmPayload } from '../shared/interface/confirm-payload.interface';
+import { PasswordResetPayload } from '../shared/interface/reset-payload.interface';
 import ConfirmEmailDto from './dtos/confirm-email.dto';
 import ResetPasswordDto from './dtos/reset-password.dto';
 import ChangePasswordDto from './dtos/change-password.dto';
+import { ZoomConfigService } from '../config/zoom.config';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +33,54 @@ export class AuthService {
     private readonly jwtConfigService: JwtConfigService,
     private readonly mailService: MailService,
     private readonly appConfigService: AppConfigService,
-  ) {}
+    private readonly zoomConfigService: ZoomConfigService,
+    private readonly httpService: HttpService,
+  ) {
+    // this.httpService.axiosRef.interceptors.request.use(
+    //   (config) => console.log(config),
+    //   (error) => Promise.reject(error),
+    // );
+  }
+
+  getToken(code: string): Observable<JwtResponseDto & { scope: string }> {
+    console.log(code);
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: 'https://meetballsapp.com/authorize',
+    });
+    return this.makeTokenRequest(params);
+  }
+
+  refreshToken(token: string): Observable<JwtResponseDto & { scope: string }> {
+    const params = new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: token,
+    });
+    return this.makeTokenRequest(params);
+  }
+
+  private makeTokenRequest(params: URLSearchParams | Record<string, string>) {
+    return this.httpService
+      .post<JwtResponseDto & { scope: string }>(
+        `oauth/token?${params.toString()}`,
+        null,
+        {
+          auth: {
+            username: this.zoomConfigService.clientId,
+            password: this.zoomConfigService.clientSecret,
+          },
+        },
+      )
+      .pipe(
+        map((result) => {
+          return result.data;
+        }),
+        catchError((e) => {
+          throw new HttpException(e.response.data, e.response.status);
+        }),
+      );
+  }
 
   /**
    * Gets login user using email and password
@@ -67,7 +118,8 @@ export class AuthService {
   ): Pick<JwtResponseDto, 'access_token' | 'expires_in'> {
     const payload: TokenPayload = {
       userId: user.uuid,
-      type: 'access',
+      authType: 'email',
+      tokenType: 'access_token',
     };
     const jwtOptions = this.jwtConfigService.accessTokenOptions;
     const token = this.jwtService.sign(payload, {
@@ -81,7 +133,8 @@ export class AuthService {
   getJwtRefreshToken(user: User): string {
     const payload: TokenPayload = {
       userId: user.uuid,
-      type: 'refresh',
+      authType: 'email',
+      tokenType: 'refresh_token',
     };
     const refreshOptions = this.jwtConfigService.refreshTokenOptions;
     const token = this.jwtService.sign(payload, {

@@ -1,5 +1,6 @@
+import { map, Observable } from 'rxjs';
 import { JwtResponseDto } from './dtos/jwt-response.dto';
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiCreatedResponse,
@@ -234,5 +235,42 @@ export class AuthController {
       success: true,
       message: 'Password successfully changed',
     };
+  }
+
+  /**
+   * Login to zoom account by requesting access token
+   */
+  @ApiQuery({
+    name: 'code',
+    description: 'The authorization code provided by /zoom/authorize',
+  })
+  @Post('/zoom/login')
+  getToken(@Query('code') code: string): Observable<JwtResponseDto> {
+    return this.authService.getToken(code).pipe(
+      map((tokenData) => {
+        const { scope, ...tokenOutput } = tokenData;
+        return tokenOutput;
+      }),
+    );
+  }
+
+  /**
+   * Request a new access token
+   */
+  @ApiQuery({
+    name: 'refresh_token',
+    description: 'The zoom refresh token',
+  })
+  @Post('/zoom/refresh')
+  refreshToken(
+    @Query('refresh_token') token: string,
+  ): Observable<JwtResponseDto> {
+    return this.authService.refreshToken(token).pipe(
+      map((tokenData) => {
+        // this.authService.saveRefreshToken(tokenData.refresh_token);
+        const { scope, ...tokenOutput } = tokenData;
+        return tokenOutput;
+      }),
+    );
   }
 }

@@ -51,7 +51,6 @@ export class Meeting {
   @IsUrl()
   joinUrl: string;
 
-  // TODO: How will the be triggered to update to started?
   @Column({
     type: 'enum',
     enum: ZoomMeetingStatus,

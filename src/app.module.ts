@@ -12,6 +12,7 @@ import { AgendaItemsModule } from './agenda-items/agenda-items.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { SeederModule } from './seeders/seeder.module';
 import { MeetingSocketModule } from './meeting-socket/meeting-socket.module';
+import { ZoomModule } from './zoom/zoom.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { MeetingSocketModule } from './meeting-socket/meeting-socket.module';
     AgendaItemsModule,
     ParticipantsModule,
     SeederModule,
+    ZoomModule,
   ],
   controllers: [AppController],
   providers: [AppService],
