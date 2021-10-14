@@ -7,10 +7,11 @@ import { ZoomController } from './zoom.controller';
 import { AppConfigModule } from '../config/config.module';
 import { Meeting } from '../meetings/meeting.entity';
 import { User } from '../users/user.entity';
+import { Participant } from './../participants/participant.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Meeting]),
+    TypeOrmModule.forFeature([User, Meeting, Participant]),
     HttpModule.register({
       baseURL: 'https://api.zoom.us/',
       timeout: 5000,

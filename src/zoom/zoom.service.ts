@@ -1,3 +1,4 @@
+import { Participant } from './../participants/participant.entity';
 import { catchError, map, Observable } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import {
@@ -19,8 +20,11 @@ import { User } from '../users/user.entity';
 import {
   ZoomDeauthorizePayload,
   ZoomDeauthorizeSubscriptionDto,
-} from './dtos/zoom-subscriptions.dto';
+} from './dtos/zoom-deauthorization-event.dto';
 import { ZoomConfigService } from './../config/zoom.config';
+import { ZoomJoinedSubscriptionDto } from './dtos/zoom-participant-event.dto';
+import { ZoomRecordingSubscriptionDto } from './dtos/zoom-recording-event.dto';
+import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 
 @Injectable()
 export class ZoomService {
@@ -29,6 +33,8 @@ export class ZoomService {
     private readonly meetingRepository: Repository<Meeting>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Participant)
+    private readonly participantRepository: Repository<Participant>,
     private readonly httpService: HttpService,
     private readonly zoomConfig: ZoomConfigService,
   ) {}
@@ -124,15 +130,8 @@ export class ZoomService {
     return this.meetingRepository.save(meetingToCreate);
   }
 
-  async deauthorizeUser(
-    verificationToken: string,
-    deauthorizeDetail: ZoomDeauthorizeSubscriptionDto,
-  ) {
+  async deauthorizeUser(deauthorizeDetail: ZoomDeauthorizeSubscriptionDto) {
     const { payload, event } = deauthorizeDetail;
-
-    if (verificationToken !== this.zoomConfig.verificationToken) {
-      throw new UnauthorizedException('Invalid verification token');
-    }
 
     if (event !== 'app_deauthorized') {
       throw new UnauthorizedException('Invalid subscription type');
@@ -178,5 +177,54 @@ export class ZoomService {
           throw new HttpException(e.response.data, e.response.status);
         }),
       );
+  }
+
+  async participantJoined(joinDetails: ZoomJoinedSubscriptionDto) {
+    const { payload, event } = joinDetails;
+    console.log(joinDetails);
+
+    if (event !== 'meeting.participant_joined') {
+      throw new UnauthorizedException('Invalid subscription type');
+    }
+
+    const { uuid, host_id, participant: joinedParticipant } = payload.object;
+    const meeting = await this.meetingRepository.findOne({
+      zoomUuid: uuid,
+    });
+
+    if (!meeting) {
+      console.log('meeting not tracked by meetballs');
+      return true;
+    }
+
+    const { email, user_name, join_time, id } = joinedParticipant;
+
+    const currParticipant = this.participantRepository.findOne({
+      meetingId: meeting.id,
+      userEmail: email,
+    });
+
+    const updatedParticipant = currParticipant
+      ? {
+          ...currParticipant,
+          timeJoined: new Date(join_time),
+        }
+      : {
+          meetingId: meeting.id,
+          userEmail: email,
+          userName: user_name,
+          role:
+            id === host_id
+              ? ParticipantRole.ADMIN
+              : ParticipantRole.CONFERENCE_MEMBER,
+          timeJoined: new Date(join_time),
+        };
+
+    return this.participantRepository.save(updatedParticipant);
+  }
+
+  recordingCompleted(_recordingDetails: ZoomRecordingSubscriptionDto) {
+    console.log(_recordingDetails);
+    throw new Error('Method not implemented.');
   }
 }

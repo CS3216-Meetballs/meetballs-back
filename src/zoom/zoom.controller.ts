@@ -21,13 +21,15 @@ import { User } from '../users/user.entity';
 
 import { ZoomMeetingDto } from './dtos/zoom-meeting.dto';
 import { MinZoomMeetingDto } from './dtos/zoom-meeting-list.dto';
-import { ZoomDeauthorizeSubscriptionDto } from './dtos/zoom-subscriptions.dto';
+import { ZoomDeauthorizeSubscriptionDto } from './dtos/zoom-deauthorization-event.dto';
 import { ZoomMeetingOptionsDto } from './dtos/zoom-meeting-options.dto';
 
-import { UseBearerAuth } from '../shared/decorators/auth.decorator';
+import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { AuthBearerToken } from '../shared/decorators/auth-header.decorator';
-import { AuthToken } from '../shared/decorators/auth-header.decorator';
 import { Usr } from '../shared/decorators/user.decorator';
+import { ZoomJoinedSubscriptionDto } from './dtos/zoom-participant-event.dto';
+import { ZoomRecordingSubscriptionDto } from './dtos/zoom-recording-event.dto';
+import { ZoomSubscriptionGuard } from './guard/zoom-subscription.guard';
 
 @ApiTags('Zoom Meetings')
 @Controller('zoom')
@@ -102,14 +104,33 @@ export class ZoomController {
    * Deauthorize user
    */
   @ApiExcludeEndpoint()
+  @UseAuth(ZoomSubscriptionGuard)
   @Post('deauthorize')
-  public deauthorized(
-    @AuthToken() verificationToken: string,
+  public deauthorizeUser(
     @Body() deauthorizeDetail: ZoomDeauthorizeSubscriptionDto,
   ) {
-    return this.zoomService.deauthorizeUser(
-      verificationToken,
-      deauthorizeDetail,
-    );
+    return this.zoomService.deauthorizeUser(deauthorizeDetail);
+  }
+
+  /**
+   * Participant joined the meeting
+   */
+  @ApiExcludeEndpoint()
+  @UseAuth(ZoomSubscriptionGuard)
+  @Post('joined')
+  public automateAttendance(@Body() joinDetails: ZoomJoinedSubscriptionDto) {
+    return this.zoomService.participantJoined(joinDetails);
+  }
+
+  /**
+   * Zoom recording completed
+   */
+  @ApiExcludeEndpoint()
+  @UseAuth(ZoomSubscriptionGuard)
+  @Post('recording')
+  public recordingCompleted(
+    @Body() recordingDetails: ZoomRecordingSubscriptionDto,
+  ) {
+    return this.zoomService.recordingCompleted(recordingDetails);
   }
 }
