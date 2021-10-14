@@ -12,7 +12,23 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
-  app.enableCors();
+
+  if (
+    process.env['NODE_ENV'] === 'development' ||
+    process.env['DISABLE_CORS'] === 'true'
+  ) {
+    app.enableCors({
+      origin: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      credentials: true,
+    });
+  } else {
+    app.enableCors({
+      origin: process.env.CLIENT_URL,
+      credentials: true,
+    });
+  }
+
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.use(morgan('tiny'));
 
