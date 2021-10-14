@@ -82,10 +82,9 @@ export class MeetingsController {
     @Body() createMeetingDto: CreateMeetingDto,
   ) {
     try {
-      const hostId = requester.uuid;
       const createdMeeting = await this.meetingsService.createMeeting(
         createMeetingDto,
-        hostId,
+        requester,
       );
       return createdMeeting;
     } catch (err) {
