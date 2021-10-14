@@ -276,15 +276,13 @@ export class AuthController {
     @Query('refresh_token') token: string,
   ): Observable<JwtResponseDto> {
     return this.authService.refreshZoomToken(token).pipe(
-      map(
-        (tokenData) => {
-          const { scope, ...tokenOutput } = tokenData;
-          return tokenOutput;
-        },
-        catchError((err: HttpException) => {
-          throw new UnauthorizedException(err.getResponse());
-        }),
-      ),
+      map((tokenData) => {
+        const { scope, ...tokenOutput } = tokenData;
+        return tokenOutput;
+      }),
+      catchError((err: HttpException) => {
+        throw new UnauthorizedException(err.getResponse());
+      }),
     );
   }
 }
