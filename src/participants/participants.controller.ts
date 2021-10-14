@@ -188,7 +188,7 @@ export class ParticipantsController {
     ]);
     return {
       success: true,
-      message: 'Email sent! Check your mailbox for password reset email.',
+      message: 'Successfully sent magic links to participants',
     };
   }
 }
