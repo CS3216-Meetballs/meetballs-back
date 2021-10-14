@@ -1,13 +1,13 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsDate,
   IsDefined,
   IsInt,
   IsNotEmpty,
+  IsNumberString,
   IsOptional,
   IsPositive,
   IsString,
@@ -45,16 +45,13 @@ export class CreateMeetingDto {
   @IsPositive()
   duration: number;
 
-  // hostId should be the user's id
-  // get from requester
-  @IsString()
+  @IsNumberString()
   @IsDefined()
   meetingId: string;
 
   @IsString()
-  @IsUrl()
   @IsDefined()
-  startUrl: string;
+  meetingPassword: string;
 
   @IsString()
   @IsUrl()

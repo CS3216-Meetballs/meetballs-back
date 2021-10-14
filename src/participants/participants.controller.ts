@@ -90,10 +90,10 @@ export class ParticipantsController {
     description: 'List of participants attending the meeting',
     type: [Participant],
   })
-  @ApiParam({ name: 'meetingId', description: 'Id of meeting' })
-  @Get('/:meetingId')
+  @ApiParam({ name: 'meetingUuid', description: 'Id of meeting' })
+  @Get('/:meetingUuid')
   public async getParticipants(
-    @Param('meetingId', ParseUUIDPipe) meetingId: string,
+    @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
   ): Promise<Participant[]> {
     return this.participantsService.getParticipantsByMeetingId(meetingId);
   }
@@ -124,9 +124,9 @@ export class ParticipantsController {
   })
   @UseBearerAuth()
   @ApiBody({ type: ParticipantEmailDto })
-  @Put('/:meetingId/present')
+  @Put('/:meetingUuid/present')
   public async markPresent(
-    @Param('meetingId', ParseUUIDPipe) meetingId: string,
+    @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Body() participantEmail: ParticipantEmailDto,
   ): Promise<void> {
     return this.participantsService
@@ -142,9 +142,9 @@ export class ParticipantsController {
   })
   @UseBearerAuth()
   @ApiBody({ type: ParticipantEmailDto })
-  @Put('/:meetingId/absent')
+  @Put('/:meetingUuid/absent')
   public async markAbsent(
-    @Param('meetingId', ParseUUIDPipe) meetingId: string,
+    @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Body() participantEmail: ParticipantEmailDto,
   ): Promise<void> {
     return this.participantsService

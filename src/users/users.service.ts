@@ -49,7 +49,6 @@ export class UsersService {
       // account_id,
       // status,
     } = zoomUser;
-    console.log(zoomUser);
     const updates = {
       zoomId: id,
       email,
