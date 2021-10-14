@@ -7,6 +7,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -23,12 +24,12 @@ import { ZoomMeetingDto } from './dtos/zoom-meeting.dto';
 import { MinZoomMeetingDto } from './dtos/zoom-meeting-list.dto';
 import { ZoomDeauthorizeSubscriptionDto } from './dtos/zoom-deauthorization-event.dto';
 import { ZoomMeetingOptionsDto } from './dtos/zoom-meeting-options.dto';
+import { ZoomJoinedSubscriptionDto } from './dtos/zoom-participant-event.dto';
+import { ZoomRecordingSubscriptionDto } from './dtos/zoom-recording-event.dto';
 
 import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { AuthBearerToken } from '../shared/decorators/auth-header.decorator';
 import { Usr } from '../shared/decorators/user.decorator';
-import { ZoomJoinedSubscriptionDto } from './dtos/zoom-participant-event.dto';
-import { ZoomRecordingSubscriptionDto } from './dtos/zoom-recording-event.dto';
 import { ZoomSubscriptionGuard } from './guard/zoom-subscription.guard';
 
 @ApiTags('Zoom Meetings')
@@ -109,7 +110,13 @@ export class ZoomController {
   public deauthorizeUser(
     @Body() deauthorizeDetail: ZoomDeauthorizeSubscriptionDto,
   ) {
-    return this.zoomService.deauthorizeUser(deauthorizeDetail);
+    const { payload, event } = deauthorizeDetail;
+
+    if (event !== 'app_deauthorized') {
+      throw new UnauthorizedException('Invalid subscription type');
+    }
+    this.zoomService.deauthorizeUser(payload);
+    return true;
   }
 
   /**
@@ -119,7 +126,14 @@ export class ZoomController {
   @UseAuth(ZoomSubscriptionGuard)
   @Post('joined')
   public automateAttendance(@Body() joinDetails: ZoomJoinedSubscriptionDto) {
-    return this.zoomService.participantJoined(joinDetails);
+    const { payload, event } = joinDetails;
+    console.log(joinDetails);
+
+    if (event !== 'meeting.participant_joined') {
+      throw new UnauthorizedException('Invalid subscription type');
+    }
+    this.zoomService.participantJoined(payload.object);
+    return true;
   }
 
   /**
@@ -131,6 +145,14 @@ export class ZoomController {
   public recordingCompleted(
     @Body() recordingDetails: ZoomRecordingSubscriptionDto,
   ) {
-    return this.zoomService.recordingCompleted(recordingDetails);
+    const { payload, event } = recordingDetails;
+    console.log(recordingDetails);
+
+    if (event !== 'recording.completed') {
+      throw new UnauthorizedException('Invalid subscription type');
+    }
+
+    this.zoomService.recordingCompleted(payload.object);
+    return true;
   }
 }

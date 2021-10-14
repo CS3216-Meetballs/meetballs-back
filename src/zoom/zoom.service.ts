@@ -1,12 +1,7 @@
 import { Participant } from './../participants/participant.entity';
 import { catchError, map, Observable } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import {
-  ForbiddenException,
-  HttpException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ForbiddenException, HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -14,16 +9,12 @@ import { ZoomUser } from '../shared/interface/zoom-user.interface';
 import { ZoomMeetingDto } from './dtos/zoom-meeting.dto';
 import { Meeting } from '../meetings/meeting.entity';
 import { ZoomMeetingListDto } from './dtos/zoom-meeting-list.dto';
-import { ZoomMeetingStatus } from '../shared/enum/zoom-meeting-status.enum';
 import { ZoomMeetingOptionsDto } from './dtos/zoom-meeting-options.dto';
 import { User } from '../users/user.entity';
-import {
-  ZoomDeauthorizePayload,
-  ZoomDeauthorizeSubscriptionDto,
-} from './dtos/zoom-deauthorization-event.dto';
+import { ZoomDeauthorizePayload } from './dtos/zoom-deauthorization-event.dto';
 import { ZoomConfigService } from './../config/zoom.config';
-import { ZoomJoinedSubscriptionDto } from './dtos/zoom-participant-event.dto';
-import { ZoomRecordingSubscriptionDto } from './dtos/zoom-recording-event.dto';
+import { ZoomJoinMeetingPayload } from './dtos/zoom-participant-event.dto';
+import { ZoomRecordingMeetingPayload } from './dtos/zoom-recording-event.dto';
 import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 
 @Injectable()
@@ -106,7 +97,6 @@ export class ZoomService {
       id,
       join_url,
       password,
-      status,
     } = meetingDetails;
 
     const meetingToCreate = this.meetingRepository.create({
@@ -117,10 +107,6 @@ export class ZoomService {
       duration: duration,
       meetingId: `${id}`,
       meetingPassword: password,
-      type:
-        status === 'started'
-          ? ZoomMeetingStatus.STARTED
-          : ZoomMeetingStatus.WAITING,
       joinUrl: join_url,
       zoomUuid: uuid,
       enableTranscription: options?.enableTranscription || false,
@@ -130,13 +116,7 @@ export class ZoomService {
     return this.meetingRepository.save(meetingToCreate);
   }
 
-  async deauthorizeUser(deauthorizeDetail: ZoomDeauthorizeSubscriptionDto) {
-    const { payload, event } = deauthorizeDetail;
-
-    if (event !== 'app_deauthorized') {
-      throw new UnauthorizedException('Invalid subscription type');
-    }
-
+  async deauthorizeUser(payload: ZoomDeauthorizePayload) {
     const user = await this.userRepository.findOne({ zoomId: payload.user_id });
     if (user) {
       if (user.isEmailConfirmed) {
@@ -151,7 +131,7 @@ export class ZoomService {
         console.log('Deleted zoom user');
       }
     } else {
-      console.log('Error: user not found in db');
+      console.log('User already deleted');
     }
 
     return this.httpService
@@ -179,15 +159,8 @@ export class ZoomService {
       );
   }
 
-  async participantJoined(joinDetails: ZoomJoinedSubscriptionDto) {
-    const { payload, event } = joinDetails;
-    console.log(joinDetails);
-
-    if (event !== 'meeting.participant_joined') {
-      throw new UnauthorizedException('Invalid subscription type');
-    }
-
-    const { uuid, host_id, participant: joinedParticipant } = payload.object;
+  async participantJoined(payload: ZoomJoinMeetingPayload) {
+    const { uuid, host_id, participant: joinedParticipant } = payload;
     const meeting = await this.meetingRepository.findOne({
       zoomUuid: uuid,
     });
@@ -199,32 +172,34 @@ export class ZoomService {
 
     const { email, user_name, join_time, id } = joinedParticipant;
 
-    const currParticipant = this.participantRepository.findOne({
+    const currParticipant = await this.participantRepository.findOne({
       meetingId: meeting.id,
       userEmail: email,
     });
-
-    const updatedParticipant = currParticipant
-      ? {
-          ...currParticipant,
-          timeJoined: new Date(join_time),
-        }
-      : {
-          meetingId: meeting.id,
-          userEmail: email,
-          userName: user_name,
-          role:
-            id === host_id
-              ? ParticipantRole.ADMIN
-              : ParticipantRole.CONFERENCE_MEMBER,
-          timeJoined: new Date(join_time),
-        };
-
-    return this.participantRepository.save(updatedParticipant);
+    if (currParticipant && currParticipant.timeJoined != null) {
+      console.log('already marked as attended');
+      return true;
+    } else if (currParticipant) {
+      console.log('Updated participant');
+      return this.participantRepository.save({
+        ...currParticipant,
+        timeJoined: new Date(join_time),
+      });
+    } else {
+      return this.participantRepository.save({
+        meetingId: meeting.id,
+        userEmail: email,
+        userName: user_name,
+        role:
+          id === host_id
+            ? ParticipantRole.ADMIN
+            : ParticipantRole.CONFERENCE_MEMBER,
+        timeJoined: new Date(join_time),
+      });
+    }
   }
 
-  recordingCompleted(_recordingDetails: ZoomRecordingSubscriptionDto) {
-    console.log(_recordingDetails);
-    throw new Error('Method not implemented.');
+  recordingCompleted(_payload: ZoomRecordingMeetingPayload) {
+    console.log('Method not implemented.');
   }
 }
