@@ -1,6 +1,7 @@
+import { HttpService } from '@nestjs/axios';
 import { Strategy } from 'passport-custom';
 import { PassportStrategy } from '@nestjs/passport';
-import { catchError, firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, map, Observable } from 'rxjs';
 import { JwtService } from '@nestjs/jwt';
 import {
   Injectable,
@@ -13,7 +14,7 @@ import { JwtConfigService } from '../../config/jwt.config';
 import { UsersService } from '../../users/users.service';
 import { User } from '../../users/user.entity';
 import { TokenPayload } from '../../shared/interface/token-payload.interface';
-import { ZoomService } from '../../zoom/zoom.service';
+import { ZoomUser } from '../../shared/interface/zoom-user.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -21,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private usersService: UsersService,
     private jwtConfigService: JwtConfigService,
     private jwtService: JwtService,
-    private zoomService: ZoomService,
+    private httpService: HttpService,
   ) {
     super();
   }
@@ -41,14 +42,39 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
   }
 
+  getUser(zoomToken: string): Observable<ZoomUser> {
+    return this.httpService
+      .get(`/v2/users/me`, {
+        baseURL: 'https://api.zoom.us',
+        headers: {
+          Authorization: `Bearer ${zoomToken}`,
+          'Content-type': 'application/json',
+        },
+      })
+      .pipe(
+        map((res) => res.data as ZoomUser),
+        catchError((e) => {
+          throw new HttpException(e.response.data, e.response.status);
+        }),
+      );
+  }
+
   private async validateZoom(jwtToken: string): Promise<User> {
     const zoomUser = await firstValueFrom(
-      this.zoomService.getUser(jwtToken).pipe(
-        catchError((err: HttpException) => {
-          console.log(err.getResponse());
-          throw new UnauthorizedException();
-        }),
-      ),
+      this.httpService
+        .get(`/v2/users/me`, {
+          baseURL: 'https://api.zoom.us',
+          headers: {
+            Authorization: `Bearer ${jwtToken}`,
+            'Content-type': 'application/json',
+          },
+        })
+        .pipe(
+          map((res) => res.data as ZoomUser),
+          catchError((e) => {
+            throw new UnauthorizedException(e.response.data, e.response.status);
+          }),
+        ),
     );
 
     return await this.usersService.updateZoomUser(zoomUser);

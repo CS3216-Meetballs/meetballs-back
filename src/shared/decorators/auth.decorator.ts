@@ -1,11 +1,11 @@
 import { JwtAuthGuard } from './../../auth/guard/jwt-auth.guard';
-import { applyDecorators, Type, UseGuards } from '@nestjs/common';
+import { applyDecorators, CanActivate, Type, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { IAuthGuard } from '@nestjs/passport';
 
-export function UseAuth(guard: Type<IAuthGuard>) {
+export function UseAuth(...guards: (Type<CanActivate> | Type<IAuthGuard>)[]) {
   return applyDecorators(
-    UseGuards(guard),
+    UseGuards(...guards),
     ApiUnauthorizedResponse({ description: 'Unauthorized' }),
   );
 }
