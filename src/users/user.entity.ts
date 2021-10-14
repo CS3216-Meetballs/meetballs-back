@@ -10,7 +10,6 @@ import {
   Entity,
   OneToMany,
 } from 'typeorm';
-
 import { Meeting } from '../meetings/meeting.entity';
 import { ZoomAccountType } from '../shared/enum/zoom-type.enum';
 

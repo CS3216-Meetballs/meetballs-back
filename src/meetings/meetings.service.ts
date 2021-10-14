@@ -1,4 +1,5 @@
 import { AgendaItem } from './../agenda-items/agenda-item.entity';
+import * as bcrypt from 'bcrypt';
 import {
   BadRequestException,
   Injectable,
@@ -17,6 +18,7 @@ import { GenerateParticipantMagicLinkPayload } from 'src/shared/interface/genera
 import { JwtService } from '@nestjs/jwt';
 import { JwtConfigService } from 'src/config/jwt.config';
 import { Participant } from 'src/participants/participant.entity';
+import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
 
 @Injectable()
 export class MeetingsService {
@@ -233,7 +235,9 @@ export class MeetingsService {
     return targetMeeting;
   }
 
-  public async getMeetingViaMagicLink(token: string) {
+  public async getMeetingViaMagicLink(
+    token: string,
+  ): Promise<GetMeetingViaMagicLinkDto> {
     let payload: GenerateParticipantMagicLinkPayload;
     try {
       payload = this.jwtService.verify<GenerateParticipantMagicLinkPayload>(
@@ -246,7 +250,6 @@ export class MeetingsService {
     } catch (error) {
       throw new BadRequestException('Invalid token/ Meeting has ended');
     }
-    console.log(payload);
     const { meetingId, userName, userEmail } = payload;
     const meeting = await this.findOneById(meetingId, true);
     if (!meeting) {
@@ -258,8 +261,21 @@ export class MeetingsService {
         participant.userEmail === userEmail &&
         participant.userName === userName,
     );
+    console.log('JOINER', joiner);
     if (!joiner) {
       throw new InternalServerErrorException('Participant not found');
+    }
+    console.log(joiner);
+    const isMatch = token === joiner.hashedMagicLinkToken;
+    // Somehow this is always true even when payload changes??
+    // const isMatch = await bcrypt.compare(
+    //   token,
+    //   joiner.hashedMagicLinkToken ?? '',
+    // );
+    if (!isMatch) {
+      throw new BadRequestException(
+        'Invalid link, please use the link from your latest invitation',
+      );
     }
     return {
       meeting,

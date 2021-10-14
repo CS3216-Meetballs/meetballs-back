@@ -12,6 +12,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
@@ -181,6 +182,9 @@ export class MeetingsController {
   @ApiOkResponse({
     type: GetMeetingViaMagicLinkDto,
     description: 'Meeting with meetingId and information of joiner',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid token',
   })
   @ApiParam({
     name: 'token',

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 import { AppConfigService } from 'src/config/app.config';
 import { JwtConfigService } from 'src/config/jwt.config';
 import { MailService } from 'src/mail/mail.service';
@@ -102,12 +103,18 @@ export class ParticipantsService {
           userName: newUsername,
           role: newRole,
           timeJoined: newTimeJoined,
+          hashedMagicLinkToken: newHashedMagicLinkToken,
+          invited: newInvited,
         } = participants.find((p) => p.userEmail === userEmail);
         return {
           ...partcipant,
           ...(newUsername && { userName: newUsername }),
           ...(newRole && { role: newRole }),
           ...(newTimeJoined && { timeJoined: newTimeJoined }),
+          ...(newHashedMagicLinkToken && {
+            hashedMagicLinkToken: newHashedMagicLinkToken,
+          }),
+          ...(newInvited && { invited: newInvited }),
         };
       });
       await this.participantsRepository.save(participantsToUpdate);
@@ -159,7 +166,7 @@ export class ParticipantsService {
   public async generateMagicLink(
     createParticipantMagicLinkDto: CreateParticipantMagicLinkDto,
     meeting: Meeting,
-  ): Promise<boolean> {
+  ): Promise<string> {
     const { meetingId, userEmail } = createParticipantMagicLinkDto;
     const participant = await this.participantsRepository.findOne({
       meetingId,
@@ -173,14 +180,13 @@ export class ParticipantsService {
     if (!participant) {
       throw new BadRequestException('Email does not exist');
     }
+    const magicLinkOptions = this.jwtConfigService.magicLinkTokenOptions;
+    const expiry = this.getTimeToMeetingEndTimeWithBuffer(meeting);
     const payload: GenerateParticipantMagicLinkPayload = {
       meetingId,
       userEmail,
       userName: participant.userName,
     };
-
-    const magicLinkOptions = this.jwtConfigService.magicLinkTokenOptions;
-    const expiry = this.getTimeToMeetingEndTimeWithBuffer(meeting);
     const token = this.jwtService.sign(payload, {
       secret: magicLinkOptions.secret,
       expiresIn: `${expiry}s`,
@@ -193,7 +199,10 @@ export class ParticipantsService {
     if (!sent) {
       throw new InternalServerErrorException('Error during sending of email');
     }
-    return sent;
+
+    // const hashedMagicLinkToken = await bcrypt.hash(token, 10);
+    // console.log('hashedMagicLinkToken', hashedMagicLinkToken);
+    return token;
   }
 
   private getTimeToMeetingEndTimeWithBuffer(meeting: Meeting) {
