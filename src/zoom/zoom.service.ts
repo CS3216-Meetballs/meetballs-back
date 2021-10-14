@@ -1,4 +1,3 @@
-import { Participant } from './../participants/participant.entity';
 import { catchError, map, Observable } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ForbiddenException, HttpException, Injectable } from '@nestjs/common';
@@ -16,6 +15,7 @@ import { ZoomConfigService } from './../config/zoom.config';
 import { ZoomJoinMeetingPayload } from './dtos/zoom-participant-event.dto';
 import { ZoomRecordingMeetingPayload } from './dtos/zoom-recording-event.dto';
 import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
+import { Participant } from './../participants/participant.entity';
 
 @Injectable()
 export class ZoomService {
@@ -100,11 +100,11 @@ export class ZoomService {
     } = meetingDetails;
 
     const meetingToCreate = this.meetingRepository.create({
-      name: topic,
-      description: agenda,
+      name: options?.name || topic,
+      description: options?.description || agenda,
       startedAt: new Date(start_time),
       host: requester,
-      duration: duration,
+      duration: options?.duration || duration,
       meetingId: `${id}`,
       meetingPassword: password,
       joinUrl: join_url,
@@ -159,7 +159,9 @@ export class ZoomService {
       );
   }
 
-  async participantJoined(payload: ZoomJoinMeetingPayload) {
+  async participantJoined(
+    payload: ZoomJoinMeetingPayload,
+  ): Promise<Participant> {
     const { uuid, host_id, participant: joinedParticipant } = payload;
     const meeting = await this.meetingRepository.findOne({
       zoomUuid: uuid,
@@ -167,7 +169,7 @@ export class ZoomService {
 
     if (!meeting) {
       console.log('meeting not tracked by meetballs');
-      return true;
+      return null;
     }
 
     const { email, user_name, join_time, id } = joinedParticipant;
@@ -178,7 +180,7 @@ export class ZoomService {
     });
     if (currParticipant && currParticipant.timeJoined != null) {
       console.log('already marked as attended');
-      return true;
+      return null;
     } else if (currParticipant) {
       console.log('Updated participant');
       return this.participantRepository.save({
