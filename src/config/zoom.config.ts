@@ -30,10 +30,4 @@ export class ZoomConfigService {
   public get verificationToken() {
     return this.config.verificationToken;
   }
-
-  public get base64Secret() {
-    return Buffer.from(
-      `${this.config.clientId}:${this.config.clientSecret}`,
-    ).toString('base64');
-  }
 }

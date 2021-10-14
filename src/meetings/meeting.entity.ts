@@ -36,7 +36,7 @@ export class Meeting {
   @Column({ type: 'varchar', nullable: true })
   hostId?: string;
 
-  @ManyToOne(() => User, (user: User) => user.uuid)
+  @ManyToOne(() => User, (user: User) => user.uuid, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'host_id', referencedColumnName: 'uuid' })
   host?: User;
 

@@ -78,7 +78,6 @@ export class AuthService {
           return result.data;
         }),
         catchError((e) => {
-          console.log(e);
           throw new HttpException(e.response.data, e.response.status);
         }),
       );

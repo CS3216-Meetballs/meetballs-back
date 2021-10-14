@@ -1,6 +1,4 @@
-import { Usr, ZoomToken } from 'src/shared/decorators/user.decorator';
-import { map, mergeMap, Observable, catchError, EMPTY } from 'rxjs';
-import { MinZoomMeetingDto } from './dtos/zoom-meeting-list.dto';
+import { map, mergeMap, Observable, catchError } from 'rxjs';
 import {
   Body,
   Controller,
@@ -10,14 +8,26 @@ import {
   ParseIntPipe,
   Post,
 } from '@nestjs/common';
-import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiExcludeEndpoint,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
+
+import { ZoomService } from './zoom.service';
+import { Meeting } from '../meetings/meeting.entity';
+import { User } from '../users/user.entity';
+
+import { ZoomMeetingDto } from './dtos/zoom-meeting.dto';
+import { MinZoomMeetingDto } from './dtos/zoom-meeting-list.dto';
+import { ZoomDeauthorizeSubscriptionDto } from './dtos/zoom-subscriptions.dto';
+import { ZoomMeetingOptionsDto } from './dtos/zoom-meeting-options.dto';
 
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
-import { ZoomService } from './zoom.service';
-import { ZoomMeetingDto } from './dtos/zoom-meeting.dto';
-import { Meeting } from '../meetings/meeting.entity';
-import { User } from 'src/users/user.entity';
-import { ZoomMeetingOptionsDto } from './dtos/zoom-meeting-options.dto';
+import { AuthBearerToken } from '../shared/decorators/auth-header.decorator';
+import { AuthToken } from '../shared/decorators/auth-header.decorator';
+import { Usr } from '../shared/decorators/user.decorator';
 
 @ApiTags('Zoom Meetings')
 @Controller('zoom')
@@ -30,7 +40,7 @@ export class ZoomController {
   @UseBearerAuth()
   @Get('meetings')
   public getZoomMeetingList(
-    @ZoomToken() token: string,
+    @AuthBearerToken() token: string,
   ): Observable<MinZoomMeetingDto[]> {
     return this.zoomService
       .getUpcomingMeetings(token)
@@ -48,7 +58,7 @@ export class ZoomController {
   @UseBearerAuth()
   @Get('meetings/:meetingId')
   public getZoomMeeting(
-    @ZoomToken() token: string,
+    @AuthBearerToken() token: string,
     @Param('meetingId', ParseIntPipe) meetingId: number,
   ): Observable<ZoomMeetingDto> {
     return this.zoomService.getMeeting(meetingId, token);
@@ -69,7 +79,7 @@ export class ZoomController {
   @Post('meetings/:meetingId')
   public linkZoomMeeting(
     @Usr() requester: User,
-    @ZoomToken() token: string,
+    @AuthBearerToken() token: string,
     @Param('meetingId', ParseIntPipe) meetingId: number,
     @Body() options: ZoomMeetingOptionsDto,
   ): Observable<Meeting> {
@@ -85,6 +95,21 @@ export class ZoomController {
         console.log('Create Meeting error:', err);
         throw new NotFoundException('Zoom meeting not found');
       }),
+    );
+  }
+
+  /**
+   * Deauthorize user
+   */
+  @ApiExcludeEndpoint()
+  @Post('deauthorize')
+  public deauthorized(
+    @AuthToken() verificationToken: string,
+    @Body() deauthorizeDetail: ZoomDeauthorizeSubscriptionDto,
+  ) {
+    return this.zoomService.deauthorizeUser(
+      verificationToken,
+      deauthorizeDetail,
     );
   }
 }
