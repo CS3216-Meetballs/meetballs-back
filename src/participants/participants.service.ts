@@ -177,7 +177,6 @@ export class ParticipantsService {
       meetingId,
       userEmail,
       userName: participant.userName,
-      type: 'confirm',
     };
 
     const magicLinkOptions = this.jwtConfigService.magicLinkTokenOptions;
