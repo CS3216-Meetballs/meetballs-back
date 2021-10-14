@@ -12,7 +12,7 @@ export class Participant {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
-  meeting?: Meeting;
+  meeting: Meeting;
 
   @PrimaryColumn({ type: 'varchar' })
   @IsEmail()

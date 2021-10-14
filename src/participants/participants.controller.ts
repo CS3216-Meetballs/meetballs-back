@@ -27,6 +27,11 @@ import { Participant } from './participant.entity';
 import { ParticipantsService } from './participants.service';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 import { ParticipantEmailDto } from './dto/participant-email.dto';
+import {
+  CreateParticipantMagicLinkDto,
+  CreateParticipantsMagicLinkDto,
+} from './dto/create-participant-magic-link.dto';
+import { StatusResponseDto } from 'src/shared/dto/result-status.dto';
 
 @ApiTags('Participant')
 @Controller('participant')
@@ -153,5 +158,37 @@ export class ParticipantsController {
         this.meetingGateway.emitParticipantsUpdated(meetingId, participant);
         return;
       });
+  }
+
+  @ApiCreatedResponse({
+    type: StatusResponseDto,
+    description: 'Successfully sent magic links to participants',
+  })
+  @ApiBody({ type: CreateParticipantsMagicLinkDto })
+  @UseBearerAuth()
+  @Post('/create-magic-links')
+  async createMagicLinks(
+    @Body() createParticipantsMagicLinkDto: CreateParticipantsMagicLinkDto,
+  ): Promise<StatusResponseDto> {
+    const meeting =
+      await this.participantsService.getOneMeetingByMeetingIdAndOneUser(
+        // Should at least have one and already checked using class-validator
+        createParticipantsMagicLinkDto.participants[0],
+      );
+    // Can change to bluebird in future, apparantly faster
+    await Promise.all([
+      createParticipantsMagicLinkDto.participants.forEach(
+        async (participant) => {
+          await this.participantsService.generateMagicLink(
+            participant,
+            meeting,
+          );
+        },
+      ),
+    ]);
+    return {
+      success: true,
+      message: 'Successfully sent magic links to participants',
+    };
   }
 }
