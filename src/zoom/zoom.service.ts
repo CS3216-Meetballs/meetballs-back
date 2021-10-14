@@ -30,21 +30,6 @@ export class ZoomService {
     private readonly zoomConfig: ZoomConfigService,
   ) {}
 
-  getUser(zoomToken: string): Observable<ZoomUser> {
-    return this.httpService
-      .get(`v2/users/me`, {
-        headers: {
-          Authorization: `Bearer ${zoomToken}`,
-        },
-      })
-      .pipe(
-        map((res) => res.data as ZoomUser),
-        catchError((e) => {
-          throw new HttpException(e.response.data, e.response.status);
-        }),
-      );
-  }
-
   getUpcomingMeetings(zoomToken: string): Observable<ZoomMeetingListDto> {
     return this.httpService
       .get(`v2/users/me/meetings`, {

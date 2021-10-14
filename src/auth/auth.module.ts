@@ -14,14 +14,12 @@ import { AppConfigModule } from '../config/config.module';
 import { AppConfigService } from '../config/app.config';
 import { JwtConfigService } from '../config/jwt.config';
 import { ZoomConfigService } from './../config/zoom.config';
-import { ZoomModule } from './../zoom/zoom.module';
 
 import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    ZoomModule,
     UsersModule,
     PassportModule,
     JwtModule.register({}),
