@@ -1,6 +1,7 @@
 import { map, mergeMap, Observable, catchError } from 'rxjs';
 import {
   Body,
+  ConflictException,
   Controller,
   Get,
   NotFoundException,
@@ -31,11 +32,15 @@ import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { AuthBearerToken } from '../shared/decorators/auth-header.decorator';
 import { Usr } from '../shared/decorators/user.decorator';
 import { ZoomSubscriptionGuard } from './guard/zoom-subscription.guard';
+import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 
 @ApiTags('Zoom Meetings')
 @Controller('zoom')
 export class ZoomController {
-  constructor(private readonly zoomService: ZoomService) {}
+  constructor(
+    private readonly zoomService: ZoomService,
+    private readonly meetingGateway: MeetingSocketGateway,
+  ) {}
 
   /**
    * Get list of upcoming zoom meetings
@@ -87,6 +92,10 @@ export class ZoomController {
     @Body() options: ZoomMeetingOptionsDto,
   ): Observable<Meeting> {
     return this.zoomService.getMeeting(meetingId, token).pipe(
+      catchError((err) => {
+        console.log('Create Meeting error:', err);
+        throw new NotFoundException('Zoom meeting not found');
+      }),
       mergeMap((meetingDetails) =>
         this.zoomService.createFromZoomMeeting(
           meetingDetails,
@@ -95,8 +104,8 @@ export class ZoomController {
         ),
       ),
       catchError((err) => {
-        console.log('Create Meeting error:', err);
-        throw new NotFoundException('Zoom meeting not found');
+        console.log('Meeting already created:', err);
+        throw new ConflictException('Zoom meeting already created');
       }),
     );
   }
@@ -132,7 +141,14 @@ export class ZoomController {
     if (event !== 'meeting.participant_joined') {
       throw new UnauthorizedException('Invalid subscription type');
     }
-    this.zoomService.participantJoined(payload.object);
+    this.zoomService.participantJoined(payload.object).then((participant) => {
+      if (participant) {
+        return this.meetingGateway.emitParticipantsUpdated(
+          participant.meetingId,
+          participant,
+        );
+      }
+    });
     return true;
   }
 

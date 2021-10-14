@@ -1,12 +1,10 @@
 import { Participant } from './../participants/participant.entity';
-import { MeetingSocketService } from './meeting-socket.service';
 import { AuthService } from '../auth/auth.service';
 import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   WebSocketGateway,
   WebSocketServer,
-  WsException,
 } from '@nestjs/websockets';
 import { classToPlain } from 'class-transformer';
 import { Server, Socket } from 'socket.io';
@@ -16,10 +14,7 @@ import { Meeting } from '../meetings/meeting.entity';
 export class MeetingSocketGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(
-    private meetingService: MeetingSocketService,
-    private authService: AuthService,
-  ) {}
+  constructor(private authService: AuthService) {}
 
   @WebSocketServer()
   server: Server;
@@ -27,11 +22,6 @@ export class MeetingSocketGateway
   async handleConnection(client: Socket) {
     const id = client.handshake.auth.meetingId as string;
     const accessToken = client.handshake.auth.token as string;
-    // const validMeetingId = await this.meetingService.doesMeetingExist(id);
-
-    // if (!validMeetingId) {
-    //   throw new WsException('Invalid meeting id.');
-    // }
 
     const user = accessToken
       ? await this.authService.getUserFromToken(accessToken).catch(() => null)
@@ -80,16 +70,4 @@ export class MeetingSocketGateway
   emitAgendaUpdated(meetingId: string) {
     return this.server.to(meetingId).emit('agendaUpdated');
   }
-
-  // @SubscribeMessage('announcement')
-  // async broadcast(
-  //   client: Socket,
-  //   @MessageBody() message: string,
-  // ): Promise<number> {
-  //   const rooms = Object.keys(client.rooms);
-  //   for (const r in rooms) {
-
-  //   }
-  //   return data;
-  // }
 }
