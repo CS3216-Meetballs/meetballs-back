@@ -77,9 +77,8 @@ export class Meeting {
   @OneToMany(() => AgendaItem, (agendaItem) => agendaItem.meeting, {
     cascade: true,
   })
-  agendaItems?: AgendaItem[];
+  agendaItems: AgendaItem[];
 
-  // one to many for participants_lists
   @OneToMany(() => Participant, (participant) => participant.meeting, {
     cascade: true,
   })

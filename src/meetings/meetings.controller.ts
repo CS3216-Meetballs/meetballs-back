@@ -27,6 +27,8 @@ import { MeetingsService } from './meetings.service';
 import { Meeting } from './meeting.entity';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
+import { Participant } from 'src/participants/participant.entity';
+import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
 
 @ApiTags('Meeting')
 @Controller('meeting')
@@ -174,5 +176,21 @@ export class MeetingsController {
     const meeting = await this.meetingsService.endMeeting(id, requesterId);
     this.meetingGateway.emitMeetingUpdated(id, meeting);
     return;
+  }
+
+  @ApiOkResponse({
+    type: GetMeetingViaMagicLinkDto,
+    description: 'Meeting with meetingId and information of joiner',
+  })
+  @ApiParam({
+    name: 'token',
+    description:
+      'JWT Token containing info on the userEmail, username and meetingId',
+  })
+  @Get('/magic-link/:token')
+  public async getMeetingViaMagicLink(
+    @Param('token') token: string,
+  ): Promise<GetMeetingViaMagicLinkDto> {
+    return this.meetingsService.getMeetingViaMagicLink(token);
   }
 }

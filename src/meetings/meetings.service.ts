@@ -2,6 +2,7 @@ import { AgendaItem } from './../agenda-items/agenda-item.entity';
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -12,14 +13,20 @@ import { Meeting } from './meeting.entity';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { ZoomMeetingStatus } from '../shared/enum/zoom-meeting-status.enum';
 import { isArray } from 'lodash';
+import { GenerateParticipantMagicLinkPayload } from 'src/shared/interface/generate-participant-magic-link.interface';
+import { JwtService } from '@nestjs/jwt';
+import { JwtConfigService } from 'src/config/jwt.config';
+import { Participant } from 'src/participants/participant.entity';
 
 @Injectable()
 export class MeetingsService {
   constructor(
     @InjectRepository(Meeting)
-    private meetingRepository: Repository<Meeting>,
+    private readonly meetingRepository: Repository<Meeting>,
     @InjectRepository(AgendaItem)
-    private agendaRepository: Repository<AgendaItem>,
+    private readonly agendaRepository: Repository<AgendaItem>,
+    private readonly jwtService: JwtService,
+    private readonly jwtConfigService: JwtConfigService,
   ) {}
 
   public async findMultiple(
@@ -224,5 +231,39 @@ export class MeetingsService {
     }
     await this.meetingRepository.save(targetMeeting);
     return targetMeeting;
+  }
+
+  public async getMeetingViaMagicLink(token: string) {
+    let payload: GenerateParticipantMagicLinkPayload;
+    try {
+      payload = this.jwtService.verify<GenerateParticipantMagicLinkPayload>(
+        token,
+        {
+          ignoreExpiration: false,
+          secret: this.jwtConfigService.magicLinkTokenOptions.secret,
+        },
+      );
+    } catch (error) {
+      throw new BadRequestException('Invalid token/ Meeting has ended');
+    }
+    console.log(payload);
+    const { meetingId, userName, userEmail } = payload;
+    const meeting = await this.findOneById(meetingId, true);
+    if (!meeting) {
+      // Should not happen but just in case
+      throw new InternalServerErrorException('Meeting not found');
+    }
+    const joiner: Participant = meeting.participants.find(
+      (participant) =>
+        participant.userEmail === userEmail &&
+        participant.userName === userName,
+    );
+    if (!joiner) {
+      throw new InternalServerErrorException('Participant not found');
+    }
+    return {
+      meeting,
+      joiner,
+    };
   }
 }

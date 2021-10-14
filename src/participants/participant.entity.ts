@@ -11,8 +11,9 @@ export class Participant {
   @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
-  meeting?: Meeting;
+  // @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
+  @JoinColumn()
+  meeting: Meeting;
 
   @PrimaryColumn({ type: 'varchar' })
   @IsEmail()
