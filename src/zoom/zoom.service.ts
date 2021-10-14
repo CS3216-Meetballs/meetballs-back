@@ -4,18 +4,18 @@ import { ForbiddenException, HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { ZoomUser } from '../shared/interface/zoom-user.interface';
 import { ZoomMeetingDto } from './dtos/zoom-meeting.dto';
-import { Meeting } from '../meetings/meeting.entity';
 import { ZoomMeetingListDto } from './dtos/zoom-meeting-list.dto';
 import { ZoomMeetingOptionsDto } from './dtos/zoom-meeting-options.dto';
-import { User } from '../users/user.entity';
 import { ZoomDeauthorizePayload } from './dtos/zoom-deauthorization-event.dto';
-import { ZoomConfigService } from './../config/zoom.config';
 import { ZoomJoinMeetingPayload } from './dtos/zoom-participant-event.dto';
 import { ZoomRecordingMeetingPayload } from './dtos/zoom-recording-event.dto';
-import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
-import { Participant } from './../participants/participant.entity';
+
+import { ParticipantRole } from '../shared/enum/participant-role.enum';
+import { Participant } from '../participants/participant.entity';
+import { ZoomConfigService } from './../config/zoom.config';
+import { Meeting } from '../meetings/meeting.entity';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class ZoomService {
