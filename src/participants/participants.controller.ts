@@ -22,15 +22,15 @@ import {
   CreateParticipantDto,
 } from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
-import { UpdateParticipantsDto } from './dto/update-participants.dto';
+import {
+  UpdateParticipant,
+  UpdateParticipantsDto,
+} from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { ParticipantsService } from './participants.service';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 import { ParticipantEmailDto } from './dto/participant-email.dto';
-import {
-  CreateParticipantMagicLinkDto,
-  CreateParticipantsMagicLinkDto,
-} from './dto/create-participant-magic-link.dto';
+import { CreateParticipantsMagicLinkDto } from './dto/create-participant-magic-link.dto';
 import { StatusResponseDto } from 'src/shared/dto/result-status.dto';
 
 @ApiTags('Participant')
@@ -175,17 +175,30 @@ export class ParticipantsController {
         // Should at least have one and already checked using class-validator
         createParticipantsMagicLinkDto.participants[0],
       );
-    // Can change to bluebird in future, apparantly faster
-    await Promise.all([
-      createParticipantsMagicLinkDto.participants.forEach(
-        async (participant) => {
+    const participants: UpdateParticipant[] = [];
+    let updateParticipantsDto: UpdateParticipantsDto = {
+      meetingId: createParticipantsMagicLinkDto.participants[0].meetingId,
+      participants,
+    };
+    await Promise.all(
+      createParticipantsMagicLinkDto.participants.map(async (participant) => {
+        const hashedMagicLinkToken =
           await this.participantsService.generateMagicLink(
             participant,
             meeting,
           );
-        },
-      ),
-    ]);
+        participants.push({
+          userEmail: participant.userEmail,
+          hashedMagicLinkToken,
+          invited: true,
+        });
+      }),
+    );
+    updateParticipantsDto = {
+      meetingId: createParticipantsMagicLinkDto.participants[0].meetingId,
+      participants,
+    };
+    await this.participantsService.updateParticipants(updateParticipantsDto);
     return {
       success: true,
       message: 'Successfully sent magic links to participants',

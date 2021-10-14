@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsDate,
   IsDefined,
   IsEmail,
@@ -14,7 +15,7 @@ import {
 } from 'class-validator';
 import { ParticipantRole } from '../../shared/enum/participant-role.enum';
 
-class UpdateParticipant {
+export class UpdateParticipant {
   @IsEmail()
   @IsDefined()
   userEmail: string;
@@ -38,6 +39,14 @@ class UpdateParticipant {
   @IsDate()
   @Type(() => Date)
   timeJoined?: Date;
+
+  @IsOptional()
+  @IsBoolean()
+  invited: boolean;
+
+  @IsOptional()
+  @IsString()
+  hashedMagicLinkToken: string;
 }
 
 export class UpdateParticipantsDto {
