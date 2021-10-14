@@ -20,7 +20,7 @@ export class CreateParticipantsMagicLinkDto {
   @IsArray()
   @Type(() => CreateParticipantMagicLinkDto)
   @ValidateNested({ each: true })
-  @ArrayMinSize(1) // If items are reordered, at least 2 items need to be swapped
+  @ArrayMinSize(1)
   @ApiProperty({
     description: 'List of participants to create magic links',
     type: [CreateParticipantMagicLinkDto],
