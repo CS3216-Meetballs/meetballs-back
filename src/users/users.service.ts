@@ -52,7 +52,6 @@ export class UsersService {
     const updates = {
       zoomId: id,
       email,
-      isEmailConfirmed: true,
       firstName: first_name,
       lastName: last_name,
       type: type,
