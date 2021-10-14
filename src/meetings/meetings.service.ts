@@ -1,3 +1,4 @@
+import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 import { AgendaItem } from './../agenda-items/agenda-item.entity';
 import * as bcrypt from 'bcrypt';
 import {
@@ -19,6 +20,7 @@ import { JwtService } from '@nestjs/jwt';
 import { JwtConfigService } from 'src/config/jwt.config';
 import { Participant } from 'src/participants/participant.entity';
 import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
+import { User } from 'src/users/user.entity';
 
 @Injectable()
 export class MeetingsService {
@@ -67,13 +69,18 @@ export class MeetingsService {
     );
   }
 
-  public async createMeeting(
-    createMeetingDto: CreateMeetingDto,
-    hostId: string,
-  ) {
+  public async createMeeting(createMeetingDto: CreateMeetingDto, host: User) {
     const meetingToCreate = this.meetingRepository.create({
       ...createMeetingDto,
-      hostId,
+      host,
+      participants: [
+        {
+          userEmail: host.email,
+          userName: host.firstName,
+          role: ParticipantRole.ADMIN,
+          invited: true,
+        },
+      ],
     });
     const createdMeeting = await this.meetingRepository.save(meetingToCreate);
     return this.findOneById(createdMeeting.id, true);

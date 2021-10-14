@@ -66,10 +66,10 @@ export class ZoomService {
 
   createFromZoomMeeting(
     meetingDetails: ZoomMeetingDto,
-    requester: User,
+    host: User,
     options: ZoomMeetingOptionsDto,
   ): Promise<Meeting> {
-    if (requester.zoomId !== meetingDetails.host_id) {
+    if (host.zoomId !== meetingDetails.host_id) {
       throw new ForbiddenException('User not meeting host');
     }
 
@@ -88,14 +88,21 @@ export class ZoomService {
       name: options?.name || topic,
       description: options?.description || agenda,
       startedAt: new Date(start_time),
-      host: requester,
+      host,
       duration: options?.duration || duration,
       meetingId: `${id}`,
       meetingPassword: password,
       joinUrl: join_url,
       zoomUuid: uuid,
       enableTranscription: options?.enableTranscription || false,
-      participants: options?.participants || [],
+      participants: options?.participants || [
+        {
+          userEmail: host.email,
+          userName: host.firstName,
+          role: ParticipantRole.ADMIN,
+          invited: true,
+        },
+      ],
       agendaItems: options.agendaItems || [],
     });
     return this.meetingRepository.save(meetingToCreate);
