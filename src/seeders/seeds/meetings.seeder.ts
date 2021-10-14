@@ -34,7 +34,7 @@ export class MeetingsSeeder implements ISeeder {
       duration: 180000,
       host: user,
       meetingId: '123456',
-      startUrl: 'https://zoom.us/',
+      meetingPassword: '123456',
       joinUrl: 'https://zoom.us/',
       enableTranscription: true,
       agendaItems: [

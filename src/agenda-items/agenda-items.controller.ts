@@ -24,7 +24,7 @@ import { UpdateAgendaItemDto } from './dto/update-agenda-item.dto';
 import { UpdateAgendaItemsPositionDto } from './dto/update-agenda-items-position.dto';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 
-@ApiTags('AgendaItem')
+@ApiTags('Agenda Item')
 @Controller('agenda-item')
 export class AgendaItemsController {
   constructor(
@@ -50,13 +50,13 @@ export class AgendaItemsController {
     type: [AgendaItem],
   })
   @ApiParam({
-    name: 'meetingId',
+    name: 'meetingUuid',
     description: 'The id of the meeting',
   })
   @UseBearerAuth()
-  @Get('/:meetingId')
+  @Get('/:meetingUuid')
   public async getAgendaItemsByMeetingId(
-    @Param('meetingId', ParseUUIDPipe) meetingId: string,
+    @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
   ): Promise<AgendaItem[]> {
     return this.agendaItemsService.getAgendaItemsByMeetingId(meetingId);
   }
@@ -64,15 +64,15 @@ export class AgendaItemsController {
   @ApiOkResponse({
     description: 'Successfully deleted agenda item',
   })
-  @ApiParam({ name: 'meetingId', description: 'The id of the meeting' })
+  @ApiParam({ name: 'meetingUuid', description: 'The id of the meeting' })
   @ApiParam({
     name: 'position',
     description: 'The position of the agenda item',
   })
   @UseBearerAuth()
-  @Delete('/:meetingId/:position')
+  @Delete('/:meetingUuid/:position')
   public async deleteAgendaItemByPosition(
-    @Param('meetingId', ParseUUIDPipe) meetingId: string,
+    @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Param('position', ParseIntPipe) position: number,
   ): Promise<void> {
     await this.agendaItemsService.deleteAgendaItemByMeetingIdAndPosition(
@@ -89,9 +89,9 @@ export class AgendaItemsController {
     type: UpdateAgendaItemDto,
   })
   @UseBearerAuth()
-  @Put('/:meetingId/:position')
+  @Put('/:meetingUuid/:position')
   public async updateAgendaItemByPosition(
-    @Param('meetingId', ParseUUIDPipe) meetingId: string,
+    @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Param('position', ParseIntPipe) position: number,
     @Body() updateAgendaItemDto: UpdateAgendaItemDto,
   ): Promise<void> {

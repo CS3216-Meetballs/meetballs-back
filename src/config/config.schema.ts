@@ -26,4 +26,5 @@ export default Joi.object({
 
   ZOOM_CLIENT_ID: Joi.string().required(),
   ZOOM_CLIENT_SECRET: Joi.string().required(),
+  ZOOM_VERIFICATION_TOKEN: Joi.string().required(),
 });

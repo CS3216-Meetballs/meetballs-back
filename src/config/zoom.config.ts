@@ -6,6 +6,7 @@ const env = process.env;
 export const zoomConfig = registerAs('zoom', () => ({
   clientId: env.ZOOM_CLIENT_ID,
   clientSecret: env.ZOOM_CLIENT_SECRET,
+  verificationToken: env.ZOOM_VERIFICATION_TOKEN,
 }));
 
 @Injectable()
@@ -24,6 +25,10 @@ export class ZoomConfigService {
 
   public get clientSecret() {
     return this.config.clientSecret;
+  }
+
+  public get verificationToken() {
+    return this.config.verificationToken;
   }
 
   public get base64Secret() {

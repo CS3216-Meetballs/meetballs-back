@@ -40,12 +40,14 @@ export class Meeting {
   @JoinColumn({ name: 'host_id', referencedColumnName: 'uuid' })
   host?: User;
 
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  zoomUuid: string;
+
   @Column({ type: 'varchar' })
   meetingId: string;
 
   @Column({ type: 'varchar' })
-  @IsUrl()
-  startUrl: string;
+  meetingPassword: string;
 
   @Column({ type: 'varchar' })
   @IsUrl()

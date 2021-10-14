@@ -43,7 +43,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   private async validateZoom(jwtToken: string): Promise<User> {
     const zoomUser = await firstValueFrom(
-      this.zoomService.getUser('me', jwtToken).pipe(
+      this.zoomService.getUser(jwtToken).pipe(
         catchError((err: HttpException) => {
           console.log(err.getResponse());
           throw new UnauthorizedException();
@@ -51,11 +51,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       ),
     );
 
-    // const user = await this.usersService.findByZoomId(zoomUser.id);
-    // if (!user) {
     return await this.usersService.updateZoomUser(zoomUser);
-    // }
-    // return user;
   }
 
   private async validateLocal(jwtToken: string): Promise<User> {

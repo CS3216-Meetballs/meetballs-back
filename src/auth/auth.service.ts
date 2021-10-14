@@ -43,7 +43,6 @@ export class AuthService {
   }
 
   getZoomToken(code: string): Observable<JwtResponseDto & { scope: string }> {
-    console.log(code);
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
@@ -95,7 +94,7 @@ export class AuthService {
     if (!user || !user.passwordHash) {
       return null;
     }
-    const isMatch = await bcrypt.compare(pass, user.passwordHash);
+    const isMatch = await bcrypt.compare(pass, user.passwordHash || '');
     if (!isMatch) {
       return null;
     }
@@ -276,7 +275,10 @@ export class AuthService {
   ): Promise<boolean> {
     const { newPassword, oldPassword } = changePasswordDto;
 
-    const match = await bcrypt.compare(oldPassword, requester.passwordHash);
+    const match = await bcrypt.compare(
+      oldPassword,
+      requester.passwordHash || '',
+    );
     if (!match) {
       throw new BadRequestException('Incorrect password');
     }
