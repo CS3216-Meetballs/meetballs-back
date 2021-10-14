@@ -54,7 +54,7 @@ export class MailService {
       context: {
         title: 'Join MeetBalls Meeting',
         username: participant.userName,
-        content: 'Please click the link below to join the MeetBalls meeting@',
+        content: 'Please click the link below to join the MeetBalls meeting',
         action_url: magicLink,
         action_text: 'Join Meeting',
       },
