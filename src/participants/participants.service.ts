@@ -164,7 +164,7 @@ export class ParticipantsService {
     meeting: Meeting,
     host: User,
   ): Promise<Participant> {
-    if (meeting.endedAt < new Date()) {
+    if (meeting.endedAt && meeting.endedAt < new Date()) {
       throw new BadRequestException('Meeting has already ended');
     }
     const { meetingId, userEmail, userName } = participant;

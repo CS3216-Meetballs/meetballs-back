@@ -103,7 +103,14 @@ export class ZoomService {
           invited: true,
         },
       ],
-      agendaItems: options.agendaItems || [],
+      agendaItems: options.agendaItems || [
+        {
+          position: 1,
+          name: 'Your 1st meeting item',
+          description: 'Click the edit button to edit this agenda item',
+          expectedDuration: 1800000, // 30min
+        },
+      ],
     });
     return this.meetingRepository.save(meetingToCreate);
   }
