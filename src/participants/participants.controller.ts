@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -15,6 +16,7 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { UseBearerAuth } from '../shared/decorators/auth.decorator';
 import {
@@ -165,6 +167,12 @@ export class ParticipantsController {
   @ApiCreatedResponse({
     type: StatusResponseDto,
     description: 'Successfully sent magic links to participant',
+  })
+  @ApiBadRequestResponse({
+    description: 'Meeting has already ended',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'User who send invite is not the host of the meeting',
   })
   @ApiBody({ type: CreateParticipantMagicLinkDto })
   @UseBearerAuth()
