@@ -200,7 +200,7 @@ export class ParticipantsService {
     return this.participantsRepository.save({
       ...participant,
       hashedMagicLinkToken: hashedMagicLinkToken,
-      newInvited: true,
+      invited: true,
     });
   }
 
