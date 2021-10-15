@@ -1,3 +1,4 @@
+import { s3Config, S3ConfigService } from './s3.config';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { appConfig, AppConfigService } from './app.config';
@@ -18,6 +19,7 @@ import { ZoomConfigService, zoomConfig } from './zoom.config';
         seederConfig,
         mailConfig,
         zoomConfig,
+        s3Config,
       ],
       validationSchema: validationSchema,
     }),
@@ -29,6 +31,7 @@ import { ZoomConfigService, zoomConfig } from './zoom.config';
     SeederConfigService,
     MailConfigService,
     ZoomConfigService,
+    S3ConfigService,
   ],
   exports: [
     ConfigModule,
@@ -38,6 +41,7 @@ import { ZoomConfigService, zoomConfig } from './zoom.config';
     SeederConfigService,
     MailConfigService,
     ZoomConfigService,
+    S3ConfigService,
   ],
 })
 export class AppConfigModule {}

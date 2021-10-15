@@ -1,3 +1,4 @@
+import { UploadsModule } from './uploads/uploads.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -14,6 +15,9 @@ import { SeederModule } from './seeders/seeder.module';
 import { MeetingSocketModule } from './meeting-socket/meeting-socket.module';
 import { ZoomModule } from './zoom/zoom.module';
 import { FeedbacksModule } from './feedback/feedbacks.module';
+import { AwsSdkModule } from 'nest-aws-sdk';
+import { S3 } from 'aws-sdk';
+import { S3ConfigService } from './config/s3.config';
 
 @Module({
   imports: [
@@ -31,6 +35,18 @@ import { FeedbacksModule } from './feedback/feedbacks.module';
     SeederModule,
     ZoomModule,
     FeedbacksModule,
+    AwsSdkModule.forRootAsync({
+      defaultServiceOptions: {
+        useFactory: ({ values }: S3ConfigService) => ({
+          ...values,
+          s3ForcePathStyle: true,
+        }),
+        imports: [AppConfigModule],
+        inject: [S3ConfigService],
+      },
+      services: [S3],
+    }),
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
