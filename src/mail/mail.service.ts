@@ -64,7 +64,7 @@ export class MailService {
         ),
         meeting_name: meeting.name,
         meeting_time: this.getFormattedDate(meeting.startedAt),
-        meeting_description: this.getFormattedDate(meeting.startedAt),
+        meeting_description: meeting.description || 'No description provided',
         zoom_url: meeting.joinUrl,
         post_meet_content: `Please click the link below to join the MeetBalls meeting using your specialised meeting link.`,
         action_url: magicLink,
