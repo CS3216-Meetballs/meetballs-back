@@ -16,7 +16,7 @@ export class Feedback {
   @Column({ type: 'int2', nullable: false })
   rating?: number;
 
-  @Column({ type: 'string', nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   meetingId?: string;
 
   @CreateDateColumn()
