@@ -9,4 +9,8 @@ export class CreateFeedbackDto {
   @IsString()
   @IsOptional()
   description: string;
+
+  @IsString()
+  @IsOptional()
+  meetingId: string;
 }

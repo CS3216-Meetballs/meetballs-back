@@ -1,4 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({ name: 'feedbacks' })
 export class Feedback {
@@ -10,4 +15,10 @@ export class Feedback {
 
   @Column({ type: 'int2', nullable: false })
   rating?: number;
+
+  @Column({ type: 'string', nullable: true })
+  meetingId?: string;
+
+  @CreateDateColumn()
+  createdAt?: number;
 }
