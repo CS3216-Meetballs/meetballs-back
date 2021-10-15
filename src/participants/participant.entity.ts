@@ -1,3 +1,4 @@
+import { ApiHideProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsEmail } from 'class-validator';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
@@ -9,6 +10,7 @@ export class Participant {
   @PrimaryColumn({ type: 'varchar' })
   meetingId: string;
 
+  @ApiHideProperty()
   @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id, {
     onDelete: 'CASCADE',
   })

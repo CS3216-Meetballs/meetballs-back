@@ -1,3 +1,4 @@
+import { ApiHideProperty } from '@nestjs/swagger';
 import { IsDefined, IsPositive, IsUrl } from 'class-validator';
 import {
   Entity,
@@ -36,6 +37,7 @@ export class Meeting {
   @Column({ type: 'varchar', nullable: true })
   hostId?: string;
 
+  @ApiHideProperty()
   @ManyToOne(() => User, (user: User) => user.uuid, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'host_id', referencedColumnName: 'uuid' })
   host?: User;
