@@ -22,16 +22,18 @@ import {
   CreateParticipantDto,
 } from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
-import {
-  UpdateParticipant,
-  UpdateParticipantsDto,
-} from './dto/update-participants.dto';
+import { UpdateParticipantsDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { ParticipantsService } from './participants.service';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 import { ParticipantEmailDto } from './dto/participant-email.dto';
-import { CreateParticipantsMagicLinkDto } from './dto/create-participant-magic-link.dto';
+import {
+  CreateParticipantMagicLinkDto,
+  CreateParticipantsMagicLinkDto,
+} from './dto/create-participant-magic-link.dto';
 import { StatusResponseDto } from 'src/shared/dto/result-status.dto';
+import { Usr } from 'src/shared/decorators/user.decorator';
+import { User } from 'src/users/user.entity';
 
 @ApiTags('Participant')
 @Controller('participant')
@@ -162,46 +164,84 @@ export class ParticipantsController {
 
   @ApiCreatedResponse({
     type: StatusResponseDto,
-    description: 'Successfully sent magic links to participants',
+    description: 'Successfully sent magic links to participant',
+  })
+  @ApiBody({ type: CreateParticipantMagicLinkDto })
+  @UseBearerAuth()
+  @Post('/send-invite')
+  async sendOneMagicLink(
+    @Usr() host: User,
+    @Body() createParticipantMagicLinkDto: CreateParticipantMagicLinkDto,
+  ): Promise<StatusResponseDto> {
+    const { userEmail, meetingId } = createParticipantMagicLinkDto;
+    const participant = await this.participantsService.findOneParticipant(
+      meetingId,
+      userEmail,
+    );
+
+    await this.participantsService.sendOneInvite(
+      participant,
+      participant.meeting,
+      host,
+    );
+
+    return {
+      success: true,
+      message: `Successfully sent magic link to ${userEmail}`,
+    };
+  }
+
+  @ApiCreatedResponse({
+    type: StatusResponseDto,
+    description: 'Sent status of meeting participants',
   })
   @ApiBody({ type: CreateParticipantsMagicLinkDto })
   @UseBearerAuth()
-  @Post('/create-magic-links')
-  async createMagicLinks(
+  @Post('/send-multiple-invites')
+  async sendMultipleMagicLinks(
+    @Usr() host: User,
     @Body() createParticipantsMagicLinkDto: CreateParticipantsMagicLinkDto,
   ): Promise<StatusResponseDto> {
-    const meeting =
-      await this.participantsService.getOneMeetingByMeetingIdAndOneUser(
-        // Should at least have one and already checked using class-validator
-        createParticipantsMagicLinkDto.participants[0],
-      );
-    const participants: UpdateParticipant[] = [];
-    let updateParticipantsDto: UpdateParticipantsDto = {
-      meetingId: createParticipantsMagicLinkDto.participants[0].meetingId,
-      participants,
-    };
-    await Promise.all(
-      createParticipantsMagicLinkDto.participants.map(async (participant) => {
-        const hashedMagicLinkToken =
-          await this.participantsService.generateMagicLink(
-            participant,
-            meeting,
-          );
-        participants.push({
-          userEmail: participant.userEmail,
-          hashedMagicLinkToken,
-          invited: true,
-        });
-      }),
+    const promises = createParticipantsMagicLinkDto.participants.map(
+      async (details) => {
+        const { userEmail, meetingId } = details;
+        const participant = await this.participantsService.findOneParticipant(
+          meetingId,
+          userEmail,
+        );
+
+        if (participant.invited) {
+          throw new Error('Participant already invited');
+        }
+
+        await this.participantsService.sendOneInvite(
+          participant,
+          participant.meeting,
+          host,
+        );
+        return `Successfully sent magic link to ${userEmail}`;
+      },
     );
-    updateParticipantsDto = {
-      meetingId: createParticipantsMagicLinkDto.participants[0].meetingId,
-      participants,
-    };
-    await this.participantsService.updateParticipants(updateParticipantsDto);
+
+    let successCount = 0;
+    const output = await Promise.allSettled(promises).then((resultArray) => {
+      return resultArray.map((res) => {
+        if (res.status == 'fulfilled') {
+          successCount++;
+          return { success: true, message: res.value };
+        } else {
+          return { success: false, message: res.reason };
+        }
+      });
+    });
+
+    const message = `Successfully sent magic link to ${successCount} participants`;
+    console.log(message);
+
     return {
       success: true,
-      message: 'Successfully sent magic links to participants',
+      message: message,
+      data: output,
     };
   }
 }

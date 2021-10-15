@@ -3,18 +3,19 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { v4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
+
 import { AppConfigService } from 'src/config/app.config';
 import { JwtConfigService } from 'src/config/jwt.config';
 import { MailService } from 'src/mail/mail.service';
 import { Meeting } from 'src/meetings/meeting.entity';
-import { ONE_HOUR_BUFFER } from 'src/shared/commons/buffer';
 import { GenerateParticipantMagicLinkPayload } from 'src/shared/interface/generate-participant-magic-link.interface';
 import { In, Repository } from 'typeorm';
-import { CreateParticipantMagicLinkDto } from './dto/create-participant-magic-link.dto';
 import {
   CreateParticipantDto,
   CreateParticipantsDto,
@@ -23,6 +24,7 @@ import { DeleteParticipantsDto } from './dto/delete-participants.dto';
 import { ParticipantEmailDto } from './dto/participant-email.dto';
 import { UpdateParticipantsDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
+import { User } from 'src/users/user.entity';
 
 @Injectable()
 export class ParticipantsService {
@@ -103,18 +105,12 @@ export class ParticipantsService {
           userName: newUsername,
           role: newRole,
           timeJoined: newTimeJoined,
-          hashedMagicLinkToken: newHashedMagicLinkToken,
-          invited: newInvited,
         } = participants.find((p) => p.userEmail === userEmail);
         return {
           ...partcipant,
           ...(newUsername && { userName: newUsername }),
           ...(newRole && { role: newRole }),
           ...(newTimeJoined && { timeJoined: newTimeJoined }),
-          ...(newHashedMagicLinkToken && {
-            hashedMagicLinkToken: newHashedMagicLinkToken,
-          }),
-          ...(newInvited && { invited: newInvited }),
         };
       });
       await this.participantsRepository.save(participantsToUpdate);
@@ -163,81 +159,65 @@ export class ParticipantsService {
     return participant;
   }
 
-  public async generateMagicLink(
-    createParticipantMagicLinkDto: CreateParticipantMagicLinkDto,
+  public async sendOneInvite(
+    participant: Participant,
     meeting: Meeting,
-  ): Promise<string> {
-    const { meetingId, userEmail } = createParticipantMagicLinkDto;
-    const participant = await this.participantsRepository.findOne({
+    host: User,
+  ): Promise<Participant> {
+    const { meetingId, userEmail, userName } = participant;
+
+    if (host.uuid !== meeting.hostId) {
+      throw new UnauthorizedException('Not host of meeting');
+    }
+
+    const magicLinkOptions = this.jwtConfigService.magicLinkTokenOptions;
+    const payload: GenerateParticipantMagicLinkPayload = {
       meetingId,
       userEmail,
+      userName,
+      nonce: v4(),
+    };
+
+    // no expiry -- always valid
+    const token = this.jwtService.sign(payload, {
+      secret: magicLinkOptions.secret,
     });
+
+    try {
+      await this.mailService.sendMagicLink(
+        participant,
+        meeting,
+        host,
+        `${this.appConfigService.clientUrl}/meeting?token=${token}`,
+      );
+    } catch (err) {
+      throw new InternalServerErrorException('Failed to send email');
+    }
+
+    const hashedMagicLinkToken = await bcrypt.hash(token, 12);
+
+    // update magic link in database
+    return this.participantsRepository.save({
+      ...participant,
+      hashedMagicLinkToken: hashedMagicLinkToken,
+      invited: true,
+    });
+  }
+
+  public async findOneParticipant(
+    meetingId: string,
+    userEmail: string,
+  ): Promise<Participant> {
+    const participant = await this.participantsRepository.findOne(
+      { userEmail, meetingId },
+      { relations: ['meeting'] },
+    );
     if (!participant) {
       throw new NotFoundException(
         `Participant with email ${participant.userEmail} does not exist`,
       );
     }
-    if (!participant) {
-      throw new BadRequestException('Email does not exist');
-    }
-    const magicLinkOptions = this.jwtConfigService.magicLinkTokenOptions;
-    const expiry = this.getTimeToMeetingEndTimeWithBuffer(meeting);
-    const payload: GenerateParticipantMagicLinkPayload = {
-      meetingId,
-      userEmail,
-      userName: participant.userName,
-    };
-    const token = this.jwtService.sign(payload, {
-      secret: magicLinkOptions.secret,
-      expiresIn: `${expiry}s`,
-    });
 
-    const sent = await this.mailService.sendMagicLink(
-      participant,
-      `${this.appConfigService.clientUrl}/meeting?token=${token}`,
-    );
-    if (!sent) {
-      throw new InternalServerErrorException('Error during sending of email');
-    }
-
-    // const hashedMagicLinkToken = await bcrypt.hash(token, 10);
-    // console.log('hashedMagicLinkToken', hashedMagicLinkToken);
-    return token;
-  }
-
-  private getTimeToMeetingEndTimeWithBuffer(meeting: Meeting) {
-    if (!meeting.duration) {
-      // Should never happen when get the duration using zoom api
-      return ONE_HOUR_BUFFER;
-    }
-    const now = new Date();
-    const diff =
-      // By right duration should always exist but for now assume might not
-      meeting.startedAt.getTime() - now.getTime() + (meeting.duration ?? 0);
-    if (diff <= 0) {
-      return 0;
-    } else {
-      // Add a buffer in case end late.
-      return diff + ONE_HOUR_BUFFER;
-    }
-  }
-
-  public async getOneMeetingByMeetingIdAndOneUser(
-    createParticipantMagicLinkDto: CreateParticipantMagicLinkDto,
-  ): Promise<Meeting> {
-    const { meetingId, userEmail } = createParticipantMagicLinkDto;
-    const participant = await this.participantsRepository
-      .createQueryBuilder('participants')
-      .innerJoinAndSelect('participants.meeting', 'meeting')
-      .where('participants.meetingId = :meetingId', { meetingId })
-      .andWhere('participants.userEmail = :userEmail', { userEmail })
-      .getOne();
-    if (!participant) {
-      // Should not happen but just in case
-      throw new InternalServerErrorException(
-        `No meeting with meetingId ${meetingId}`,
-      );
-    }
-    return participant.meeting;
+    return participant;
   }
 }

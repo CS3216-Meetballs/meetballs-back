@@ -4,7 +4,6 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  IsUrl,
   IsUUID,
   Min,
 } from 'class-validator';
@@ -37,7 +36,7 @@ export class CreateAgendaItemDto {
   @IsOptional()
   speakerName: string;
 
-  @IsUrl()
+  @IsString()
   @IsOptional()
   speakerMaterials: string;
 }

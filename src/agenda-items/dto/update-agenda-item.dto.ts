@@ -6,7 +6,6 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  IsUrl,
 } from 'class-validator';
 
 export class UpdateAgendaItemDto {
@@ -41,7 +40,7 @@ export class UpdateAgendaItemDto {
   @IsOptional()
   speakerName: string;
 
-  @IsUrl()
+  @IsString()
   @IsOptional()
   speakerMaterials: string;
 }

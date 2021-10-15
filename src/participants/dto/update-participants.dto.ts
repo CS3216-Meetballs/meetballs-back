@@ -3,7 +3,6 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
-  IsBoolean,
   IsDate,
   IsDefined,
   IsEmail,
@@ -39,14 +38,6 @@ export class UpdateParticipant {
   @IsDate()
   @Type(() => Date)
   timeJoined?: Date;
-
-  @IsOptional()
-  @IsBoolean()
-  invited: boolean;
-
-  @IsOptional()
-  @IsString()
-  hashedMagicLinkToken: string;
 }
 
 export class UpdateParticipantsDto {

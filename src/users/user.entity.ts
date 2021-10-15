@@ -62,6 +62,7 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @ApiHideProperty()
   @OneToMany(() => Meeting, (meeting) => meeting.host)
   createdMeetings?: Meeting[];
 }
