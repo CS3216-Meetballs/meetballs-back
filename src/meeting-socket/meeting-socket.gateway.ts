@@ -10,7 +10,7 @@ import { classToPlain } from 'class-transformer';
 import { Server, Socket } from 'socket.io';
 import { Meeting } from '../meetings/meeting.entity';
 
-@WebSocketGateway({ namespace: 'meeting' })
+@WebSocketGateway({ namespace: 'meeting', cors: true })
 export class MeetingSocketGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
