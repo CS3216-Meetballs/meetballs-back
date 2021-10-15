@@ -72,12 +72,20 @@ export class MeetingsService {
     const meetingToCreate = this.meetingRepository.create({
       ...createMeetingDto,
       host,
-      participants: [
+      participants: createMeetingDto.participants || [
         {
           userEmail: host.email,
           userName: host.firstName,
           role: ParticipantRole.ADMIN,
           invited: true,
+        },
+      ],
+      agendaItems: createMeetingDto.agendaItems || [
+        {
+          position: 1,
+          name: 'Your 1st meeting item',
+          description: 'Click the edit button to edit this agenda item',
+          expectedDuration: 1800000, // 30min
         },
       ],
     });
