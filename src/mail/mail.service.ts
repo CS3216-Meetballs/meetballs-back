@@ -89,7 +89,7 @@ export class MailService {
         `If you have any speaker materials to upload, please feel free to visit the link to upload.`
       );
     } else {
-      `${hostName} has invited you to join ${meetingName} as a participant.`;
+      return `${hostName} has invited you to join ${meetingName} as a participant.`;
     }
   }
 
