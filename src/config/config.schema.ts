@@ -15,6 +15,7 @@ export default Joi.object({
   JWT_MAIL_VERIFY_EXPIRATION_TIME: Joi.string().default('3600'), // in seconds
   JWT_PASSWORD_RESET_SECRET: Joi.string().required(),
   JWT_PASSWORD_RESET_EXPIRATION_TIME: Joi.string().default('600'), // in seconds
+  MAGIC_LINK_SECRET: Joi.string().required(),
 
   SEEDER_SHOULD_SEED: Joi.boolean().default(false),
 

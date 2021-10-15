@@ -4,7 +4,6 @@ import * as bcrypt from 'bcrypt';
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -249,19 +248,16 @@ export class MeetingsService {
     try {
       payload = this.jwtService.verify<GenerateParticipantMagicLinkPayload>(
         token,
-        {
-          ignoreExpiration: false,
-          secret: this.jwtConfigService.magicLinkTokenOptions.secret,
-        },
+        { secret: this.jwtConfigService.magicLinkTokenOptions.secret },
       );
     } catch (error) {
-      throw new BadRequestException('Invalid token/ Meeting has ended');
+      throw new BadRequestException('Invalid token');
     }
     const { meetingId, userName, userEmail } = payload;
     const meeting = await this.findOneById(meetingId, true);
     if (!meeting) {
-      // Should not happen but just in case
-      throw new InternalServerErrorException('Meeting not found');
+      // Meeting deleted
+      throw new NotFoundException('Meeting not found');
     }
     const joiner: Participant = meeting.participants.find(
       (participant) =>
@@ -270,15 +266,13 @@ export class MeetingsService {
     );
     console.log('JOINER', joiner);
     if (!joiner) {
-      throw new InternalServerErrorException('Participant not found');
+      // Participant deleted
+      throw new NotFoundException('Participant not found');
     }
-    console.log(joiner);
-    const isMatch = token === joiner.hashedMagicLinkToken;
-    // Somehow this is always true even when payload changes??
-    // const isMatch = await bcrypt.compare(
-    //   token,
-    //   joiner.hashedMagicLinkToken ?? '',
-    // );
+    const isMatch = await bcrypt.compare(
+      token,
+      joiner.hashedMagicLinkToken ?? '',
+    );
     if (!isMatch) {
       throw new BadRequestException(
         'Invalid link, please use the link from your latest invitation',
