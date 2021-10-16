@@ -262,8 +262,8 @@
           max-width: 100% !important;
           width: auto !important;
         }
-      } /* ------------------------------------- PRESERVE THESE
-      STYLES IN THE HEAD ------------------------------------- */
+      } /* -------------------------------------
+      PRESERVE THESE STYLES IN THE HEAD ------------------------------------- */
       @media all {
         .ExternalClass {
           width: 100%;
@@ -334,64 +334,61 @@
                       <td>
                         <p>Hi {{username}},</p>
                         <p>{{pre_meet_content}}</p>
-                        <div
-                          style="
-                            margin: 20px 0px;
-                            padding: 10px;
-                            position: relative;
-                            display: flex;
-                            flex-direction: column;
-                            min-width: 0;
-                            word-wrap: break-word;
-                            background-clip: border-box;
-                            border: 1px solid rgba(0, 0, 0, 0.125);
-                            border-radius: 0.25rem;
-                          "
-                        >
-                          <div
+                        <tr>
+                          <td
                             style="
-                              overflow: hidden;
-                              margin-left: 0;
-                              margin-right: 0;
-                              width: 100%;
-                              display: -webkit-box;
-                              -webkit-box-orient: vertical;
-                              margin-bottom: 0.5rem;
-                              font-size: 1.25rem;
+                              margin: 20px 0px;
+                              padding: 10px;
+                              background-clip: border-box;
+                              border: 1px solid rgba(0, 0, 0, 0.125);
+                              border-radius: 0.25rem;
                             "
                           >
-                            {{meeting_name}}
-                          </div>
-                          <div style="width: 10px; height: 10px"></div>
-                          <div
-                            style="
-                              overflow: hidden;
-                              margin-left: 0;
-                              margin-right: 0;
-                              width: 100%;
-                              display: -webkit-box;
-                              -webkit-box-orient: vertical;
-                              margin-bottom: 0;
-                              margin-top: -0.25rem;
-                              font-size: 1rem;
-                            "
-                          >
-                            {{meeting_time}}
-                          </div>
-                          <div style="width: 10px; height: 10px"></div>
-                          <p
-                            style="
-                              overflow: hidden;
-                              margin-left: 0;
-                              margin-right: 0;
-                              width: 100%;
-                              display: -webkit-box;
-                              -webkit-box-orient: vertical;
-                            "
-                          >
-                            Description: {{meeting_description}}
-                          </p>
-                        </div>
+                            <div
+                              style="
+                                overflow: hidden;
+                                margin-left: 0;
+                                margin-right: 0;
+                                width: 100%;
+                                display: -webkit-box;
+                                -webkit-box-orient: vertical;
+                                margin-bottom: 0.5rem;
+                                font-size: 1.25rem;
+                              "
+                            >
+                              {{meeting_name}}
+                            </div>
+                            <div style="width: 10px; height: 10px"></div>
+                            <div
+                              style="
+                                overflow: hidden;
+                                margin-left: 0;
+                                margin-right: 0;
+                                width: 100%;
+                                display: -webkit-box;
+                                -webkit-box-orient: vertical;
+                                margin-bottom: 0;
+                                margin-top: -0.25rem;
+                                font-size: 1rem;
+                              "
+                            >
+                              {{meeting_time}}
+                            </div>
+                            <div style="width: 10px; height: 10px"></div>
+                            <p
+                              style="
+                                overflow: hidden;
+                                margin-left: 0;
+                                margin-right: 0;
+                                width: 100%;
+                                display: -webkit-box;
+                                -webkit-box-orient: vertical;
+                              "
+                            >
+                              Description: {{meeting_description}}
+                            </p>
+                          </td>
+                        </tr>
                         <p>{{post_meet_content}}</p>
                         <table
                           role="presentation"
@@ -409,6 +406,7 @@
                                   cellpadding="0"
                                   cellspacing="0"
                                 >
+                                  <div style="width: 10px; height: 10px"></div>
                                   <tbody>
                                     <tr>
                                       <td>
