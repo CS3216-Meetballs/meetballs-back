@@ -105,7 +105,7 @@ export class ZoomService {
       ],
       agendaItems: options.agendaItems || [
         {
-          position: 1,
+          position: 0,
           name: 'Your 1st meeting item',
           description: 'Click the edit button to edit this agenda item',
           expectedDuration: 1800000, // 30min
