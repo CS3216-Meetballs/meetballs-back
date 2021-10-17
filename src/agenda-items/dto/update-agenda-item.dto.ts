@@ -42,5 +42,9 @@ export class UpdateAgendaItemDto {
 
   @IsString()
   @IsOptional()
+  speakerId: string;
+
+  @IsString()
+  @IsOptional()
   speakerMaterials: string;
 }

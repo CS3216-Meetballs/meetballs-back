@@ -15,7 +15,7 @@ async function bootstrap() {
 
   if (
     process.env['NODE_ENV'] === 'development' ||
-    process.env['DISABLE_CORS'] === 'true'
+    process.env['NODE_ENV'] === 'staging'
   ) {
     app.enableCors({
       origin: true,

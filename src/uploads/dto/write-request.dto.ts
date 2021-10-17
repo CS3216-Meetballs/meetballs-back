@@ -3,9 +3,13 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class UploadRequestDto {
   @IsString()
   @IsNotEmpty()
-  fileName: string;
+  name: string;
 
   @IsString()
   @IsNotEmpty()
-  mimeType: string;
+  uploader: string;
+
+  @IsString()
+  @IsNotEmpty()
+  type: string;
 }

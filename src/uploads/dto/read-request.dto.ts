@@ -3,9 +3,9 @@ import { IsNotEmpty, IsString } from 'class-validator';
 export class ReadRequestDto {
   @IsString()
   @IsNotEmpty()
-  filename: string;
+  name: string;
 
   @IsString()
   @IsNotEmpty()
-  uploaderId: string;
+  uploader: string;
 }

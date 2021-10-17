@@ -22,7 +22,7 @@ export class DatabaseConfigService implements TypeOrmOptionsFactory {
   createTypeOrmOptions(): TypeOrmModuleOptions {
     return {
       ...this.configService.get<typeof databaseConfig>('database'),
-      ssl: this.appConfig.isProd,
+      ssl: !this.appConfig.isDev,
       type: 'postgres',
       namingStrategy: new SnakeNamingStrategy(),
     };

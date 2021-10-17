@@ -4,6 +4,7 @@ import { PutObjectRequest } from 'aws-sdk/clients/s3';
 import { InjectAwsService } from 'nest-aws-sdk';
 
 import { S3ConfigService } from '../config/s3.config';
+import { AppConfigService } from '../config/app.config';
 import { UploadResponse } from './dto/uploads-response.dto';
 
 interface SignedUrlParams extends Omit<PutObjectRequest, 'Expires'> {
@@ -13,12 +14,19 @@ interface SignedUrlParams extends Omit<PutObjectRequest, 'Expires'> {
 @Injectable()
 export class UploadsService {
   private bucketName: string;
+  private prefix: string;
 
   constructor(
     @InjectAwsService(S3) private readonly s3: S3,
-    config: S3ConfigService,
+    private readonly s3Config: S3ConfigService,
+    private readonly appConfig: AppConfigService,
   ) {
-    this.bucketName = config.bucketName;
+    this.bucketName = s3Config.bucketName;
+    this.prefix = appConfig.isDev
+      ? 'meetballs-dev'
+      : appConfig.isStaging
+      ? 'meetballs-staging'
+      : 'meetballs-prod';
   }
 
   public createUploadLink(
@@ -27,7 +35,7 @@ export class UploadsService {
     filename: string,
     mimeType: string,
   ): UploadResponse {
-    const key = `meetballs/${meetingId}/${requesterId}/${filename}`;
+    const key = `${this.prefix}/${meetingId}/${requesterId}/${filename}`;
 
     return {
       uploadUrl: this.getWritableSignedUrl(key, mimeType),
@@ -35,14 +43,14 @@ export class UploadsService {
     };
   }
 
-  public createDownloadLink(
+  public async createDownloadLink(
     meetingId: string,
     uploaderId: string,
     filename: string,
-  ): string {
-    const key = `meetballs/${meetingId}/${uploaderId}/${filename}`;
+  ): Promise<string> {
+    const key = `${this.prefix}/${meetingId}/${uploaderId}/${filename}`;
 
-    if (this.doesFileExist(key)) {
+    if (!this.appConfig.isDev && !(await this.doesFileExist(key))) {
       throw new NotFoundException('File not found');
     }
     return this.getDownloadableSignedUrl(key);
