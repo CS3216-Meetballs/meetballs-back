@@ -75,9 +75,13 @@ export class ParticipantsController {
   @UseBearerAuth()
   @Delete('/')
   public async deleteParticipants(
+    @Usr() requester: User,
     @Body() deleteParticipantsDto: DeleteParticipantsDto,
   ): Promise<void> {
-    return this.participantsService.deleteParticipants(deleteParticipantsDto);
+    return this.participantsService.deleteParticipants(
+      deleteParticipantsDto,
+      requester,
+    );
   }
 
   @ApiOkResponse({

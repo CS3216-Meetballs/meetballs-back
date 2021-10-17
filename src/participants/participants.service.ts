@@ -25,6 +25,7 @@ import { ParticipantEmailDto } from './dto/participant-email.dto';
 import { UpdateParticipantsDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { User } from 'src/users/user.entity';
+import { isNil } from 'lodash';
 
 @Injectable()
 export class ParticipantsService {
@@ -71,11 +72,15 @@ export class ParticipantsService {
 
   public async deleteParticipants(
     deleteParticipantsDto: DeleteParticipantsDto,
+    requester: User,
   ): Promise<void> {
     const { meetingId, participants } = deleteParticipantsDto;
     const listOfUserEmails = [...participants].map(
       (participant) => participant.userEmail,
     );
+    if (!isNil(listOfUserEmails.find((email) => email === requester.email))) {
+      throw new BadRequestException('You cannot remove yourself');
+    }
     try {
       const participantsToBeDeleted = await this.participantsRepository.find({
         meetingId,
