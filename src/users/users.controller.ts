@@ -12,8 +12,8 @@ import {
   Param,
   NotFoundException,
   ParseUUIDPipe,
-  UnauthorizedException,
   Put,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ChangeNameDto } from './dto/change-name.dto';
@@ -80,7 +80,7 @@ export class UsersController {
     @Body() changeNameDto: ChangeNameDto,
   ): Promise<User> {
     if (uuid !== requester.uuid) {
-      throw new UnauthorizedException('Not allowed to update this user');
+      throw new ForbiddenException('Not allowed to update this user');
     }
     return this.usersService.updateName(uuid, changeNameDto);
   }

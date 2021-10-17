@@ -3,9 +3,9 @@ import { AgendaItem } from './../agenda-items/agenda-item.entity';
 import * as bcrypt from 'bcrypt';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Any, FindConditions, Repository } from 'typeorm';
@@ -104,7 +104,7 @@ export class MeetingsService {
     }
 
     if (targetMeeting.hostId !== requesterId) {
-      throw new UnauthorizedException('Cannot modify meeting');
+      throw new ForbiddenException('Cannot modify meeting');
     }
 
     const meetingToUpdate = this.meetingRepository.create({
@@ -122,7 +122,7 @@ export class MeetingsService {
     }
 
     if (targetMeeting.hostId !== requesterId) {
-      throw new UnauthorizedException('Cannot delete meeting');
+      throw new ForbiddenException('Cannot delete meeting');
     }
     return this.meetingRepository.remove(targetMeeting);
   }
@@ -142,7 +142,7 @@ export class MeetingsService {
     }
 
     if (targetMeeting.hostId !== requesterId) {
-      throw new UnauthorizedException('Cannot start meeting');
+      throw new ForbiddenException('Cannot start meeting');
     }
 
     if (targetMeeting.type != ZoomMeetingStatus.WAITING) {
@@ -176,7 +176,7 @@ export class MeetingsService {
     }
 
     if (targetMeeting.hostId !== requesterId) {
-      throw new UnauthorizedException('Cannot move to next meeting item');
+      throw new ForbiddenException('Cannot move to next meeting item');
     }
 
     if (!targetMeeting.agendaItems || targetMeeting.agendaItems.length <= 1) {
@@ -221,7 +221,7 @@ export class MeetingsService {
     }
 
     if (targetMeeting.hostId !== requesterId) {
-      throw new UnauthorizedException('Cannot end meeting');
+      throw new ForbiddenException('Cannot end meeting');
     }
 
     if (targetMeeting.type != ZoomMeetingStatus.STARTED) {

@@ -3,12 +3,12 @@ import {
   Body,
   ConflictException,
   Controller,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
   ParseIntPipe,
   Post,
-  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -122,7 +122,7 @@ export class ZoomController {
     const { payload, event } = deauthorizeDetail;
 
     if (event !== 'app_deauthorized') {
-      throw new UnauthorizedException('Invalid subscription type');
+      throw new ForbiddenException('Invalid subscription type');
     }
     this.zoomService.deauthorizeUser(payload);
     return true;
@@ -139,7 +139,7 @@ export class ZoomController {
     console.log(joinDetails);
 
     if (event !== 'meeting.participant_joined') {
-      throw new UnauthorizedException('Invalid subscription type');
+      throw new ForbiddenException('Invalid subscription type');
     }
     this.zoomService.participantJoined(payload.object).then((participant) => {
       if (participant) {
@@ -165,7 +165,7 @@ export class ZoomController {
     console.log(recordingDetails);
 
     if (event !== 'recording.completed') {
-      throw new UnauthorizedException('Invalid subscription type');
+      throw new ForbiddenException('Invalid subscription type');
     }
 
     this.zoomService.recordingCompleted(payload.object);

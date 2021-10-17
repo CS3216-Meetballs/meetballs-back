@@ -1,9 +1,9 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -175,7 +175,7 @@ export class ParticipantsService {
     const { meetingId, userEmail, userName } = participant;
 
     if (host.uuid !== meeting.hostId) {
-      throw new UnauthorizedException('Not host of meeting');
+      throw new ForbiddenException('Not host of meeting');
     }
 
     const magicLinkOptions = this.jwtConfigService.magicLinkTokenOptions;
