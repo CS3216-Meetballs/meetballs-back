@@ -122,6 +122,9 @@ export class AgendaItemsService {
         .update(AgendaItem)
         .set({
           ...updateAgendaItemDto,
+          speakerId: updateAgendaItemDto.speakerId || null,
+          speakerMaterials: updateAgendaItemDto.speakerMaterials || null,
+          speakerName: updateAgendaItemDto.speakerName || null,
         })
         .where({
           meetingId,

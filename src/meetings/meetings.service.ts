@@ -82,7 +82,7 @@ export class MeetingsService {
       ],
       agendaItems: createMeetingDto.agendaItems || [
         {
-          position: 1,
+          position: 0,
           name: 'Your 1st meeting item',
           description: 'Click the edit button to edit this agenda item',
           expectedDuration: 1800000, // 30min
@@ -261,16 +261,14 @@ export class MeetingsService {
     } catch (error) {
       throw new BadRequestException('Invalid token');
     }
-    const { meetingId, userName, userEmail } = payload;
+    const { meetingId, userEmail } = payload;
     const meeting = await this.findOneById(meetingId, true);
     if (!meeting) {
       // Meeting deleted
       throw new NotFoundException('Meeting not found');
     }
     const joiner: Participant = meeting.participants.find(
-      (participant) =>
-        participant.userEmail === userEmail &&
-        participant.userName === userName,
+      (participant) => participant.userEmail === userEmail,
     );
     console.log('JOINER', joiner);
     if (!joiner) {

@@ -42,5 +42,8 @@ export class AgendaItem {
   speakerName?: string;
 
   @Column({ type: 'varchar', nullable: true })
+  speakerId?: string;
+
+  @Column({ type: 'varchar', nullable: true })
   speakerMaterials?: string;
 }

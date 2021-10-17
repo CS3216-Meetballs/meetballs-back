@@ -22,12 +22,16 @@ export class AppConfigService {
     return this.config.environment === 'development';
   }
 
+  public get isStaging() {
+    return this.config.environment === 'staging';
+  }
+
   public get isProd() {
-    return this.config.environment !== 'development';
+    return this.config.environment === 'production';
   }
 
   public get clientUrl() {
-    if (this.isProd) {
+    if (!this.isDev) {
       return env.CLIENT_URL;
     } else {
       return 'https://localhost:3000';

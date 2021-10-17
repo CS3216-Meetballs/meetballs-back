@@ -38,5 +38,9 @@ export class CreateAgendaItemDto {
 
   @IsString()
   @IsOptional()
+  speakerId: string;
+
+  @IsString()
+  @IsOptional()
   speakerMaterials: string;
 }

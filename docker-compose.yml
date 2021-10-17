@@ -27,9 +27,9 @@ services:
       - s3
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc config host add s3 http://s3:9000 access_key secret_key;
-      /usr/bin/mc mb s3/nuscats;
-      /usr/bin/mc policy set download s3/nuscats;
+      /usr/bin/mc config host add --quiet --api s3v4 s3 http://s3:9000 access_key secret_key;
+      /usr/bin/mc rb --force s3/somebucketname1/;
+      /usr/bin/mc mb --quiet s3/meetballs-bucket;
       exit 0;
       "
   

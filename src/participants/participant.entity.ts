@@ -1,7 +1,14 @@
 import { ApiHideProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsEmail } from 'class-validator';
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Generated,
+  JoinColumn,
+  ManyToOne,
+  PrimaryColumn,
+} from 'typeorm';
 import { Meeting } from '../meetings/meeting.entity';
 import { ParticipantRole } from '../shared/enum/participant-role.enum';
 
@@ -9,6 +16,10 @@ import { ParticipantRole } from '../shared/enum/participant-role.enum';
 export class Participant {
   @PrimaryColumn({ type: 'varchar' })
   meetingId: string;
+
+  @Column()
+  @Generated('uuid')
+  id: string;
 
   @ApiHideProperty()
   @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id, {
