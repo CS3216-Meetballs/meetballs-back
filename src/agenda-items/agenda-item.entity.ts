@@ -1,3 +1,4 @@
+import { Participant } from 'src/participants/participant.entity';
 import { IsDefined } from 'class-validator';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { Meeting } from '../meetings/meeting.entity';
@@ -38,11 +39,13 @@ export class AgendaItem {
   @Column({ type: 'boolean', default: false })
   isCurrent?: boolean;
 
-  @Column({ type: 'varchar', nullable: true })
-  speakerName?: string;
-
-  @Column({ type: 'varchar', nullable: true })
-  speakerId?: string;
+  @ManyToOne(() => Participant, {
+    cascade: true,
+    onDelete: 'SET NULL',
+    nullable: true,
+    eager: true,
+  })
+  speaker?: Participant;
 
   @Column({ type: 'varchar', nullable: true })
   speakerMaterials?: string;

@@ -38,10 +38,6 @@ export class UpdateAgendaItemDto {
 
   @IsString()
   @IsOptional()
-  speakerName: string;
-
-  @IsString()
-  @IsOptional()
   speakerId: string;
 
   @IsString()

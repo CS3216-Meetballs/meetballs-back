@@ -5,21 +5,26 @@ import {
   Column,
   Entity,
   Generated,
+  Index,
   JoinColumn,
   ManyToOne,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Meeting } from '../meetings/meeting.entity';
 import { ParticipantRole } from '../shared/enum/participant-role.enum';
 
 @Entity({ name: 'participants' })
+@Index(['userEmail', 'meetingId'], { unique: true })
 export class Participant {
-  @PrimaryColumn({ type: 'varchar' })
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ type: 'varchar' })
   meetingId: string;
 
-  @Column()
-  @Generated('uuid')
-  id: string;
+  @Column({ type: 'varchar' })
+  @IsEmail()
+  userEmail: string;
 
   @ApiHideProperty()
   @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id, {
@@ -27,10 +32,6 @@ export class Participant {
   })
   @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
   meeting: Meeting;
-
-  @PrimaryColumn({ type: 'varchar' })
-  @IsEmail()
-  userEmail: string;
 
   @Column({ type: 'varchar', nullable: true })
   userName?: string;
