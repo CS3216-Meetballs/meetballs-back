@@ -164,6 +164,23 @@ export class ParticipantsService {
     return participant;
   }
 
+  public async markDuplicate(
+    meetingId: string,
+    participantEmailDto: ParticipantEmailDto,
+  ): Promise<Participant> {
+    const participant = await this.participantsRepository.findOne({
+      meetingId,
+      userEmail: participantEmailDto.email,
+    });
+    if (!participant) {
+      throw new NotFoundException('Participant not found');
+    }
+
+    participant.isDuplicate = true;
+    await this.participantsRepository.save(participant);
+    return participant;
+  }
+
   public async sendOneInvite(
     participant: Participant,
     meeting: Meeting,

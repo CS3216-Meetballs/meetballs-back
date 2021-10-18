@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -162,6 +161,24 @@ export class ParticipantsController {
   ): Promise<void> {
     return this.participantsService
       .markAbsent(meetingId, participantEmail)
+      .then((participant) => {
+        this.meetingGateway.emitParticipantsUpdated(meetingId, participant);
+        return;
+      });
+  }
+
+  @ApiCreatedResponse({
+    description: 'Successfully marked participant as duplicate',
+  })
+  @UseBearerAuth()
+  @ApiBody({ type: ParticipantEmailDto })
+  @Put('/:meetingUuid/duplicate')
+  public async markDuplicate(
+    @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
+    @Body() participantEmail: ParticipantEmailDto,
+  ): Promise<void> {
+    return this.participantsService
+      .markDuplicate(meetingId, participantEmail)
       .then((participant) => {
         this.meetingGateway.emitParticipantsUpdated(meetingId, participant);
         return;
