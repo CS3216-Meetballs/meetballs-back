@@ -46,4 +46,8 @@ export class AgendaItem {
 
   @Column({ type: 'varchar', nullable: true })
   speakerMaterials?: string;
+
+  // TODO: Remove nullable: true after resetting database
+  @Column({ type: 'boolean', default: true, nullable: true })
+  accepted?: boolean;
 }

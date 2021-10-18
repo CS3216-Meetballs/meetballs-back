@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsDefined,
   IsInt,
   IsOptional,
@@ -43,4 +44,8 @@ export class CreateAgendaItemDto {
   @IsString()
   @IsOptional()
   speakerMaterials: string;
+
+  @IsBoolean()
+  @IsOptional()
+  accepted: boolean;
 }
