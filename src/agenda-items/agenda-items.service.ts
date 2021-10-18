@@ -113,7 +113,6 @@ export class AgendaItemsService {
         ...updateDetails,
         speaker: speakerId ? { id: speakerId } : null,
       });
-      console.log(newAgenda, speakerId);
       await this.agendaItemRepository.save(newAgenda);
     } catch (err) {
       throw new BadRequestException(err.message);

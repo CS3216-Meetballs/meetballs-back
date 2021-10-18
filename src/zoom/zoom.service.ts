@@ -2,7 +2,7 @@ import { catchError, map, Observable } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { ForbiddenException, HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 
 import { ZoomMeetingDto } from './dtos/zoom-meeting.dto';
 import { ZoomMeetingListDto } from './dtos/zoom-meeting-list.dto';
@@ -128,6 +128,11 @@ export class ZoomService {
         // Delete account
         await this.userRepository.remove(user);
         console.log('Deleted zoom user');
+        await this.meetingRepository.update(
+          { hostId: IsNull(), zoomUuid: Not(IsNull()) },
+          { zoomUuid: null },
+        );
+        console.log('Unlinked orphaned meetings');
       }
     } else {
       console.log('User already deleted');
