@@ -46,12 +46,14 @@ export class ParticipantsService {
       meetingId,
       userEmail,
     });
-    if (participant) {
+    if (participant && !participant.isDuplicate) {
       throw new BadRequestException(
         `Participant with email ${userEmail} is already added into this meeting`,
       );
     }
     const participantToBeCreated = this.participantsRepository.create({
+      id: participant?.id || undefined,
+      isDuplicate: false,
       ...createParticipantDto,
     });
     return this.participantsRepository.save(participantToBeCreated);
@@ -177,6 +179,8 @@ export class ParticipantsService {
     }
 
     participant.isDuplicate = true;
+    participant.timeJoined = null;
+    participant.invited = false;
     await this.participantsRepository.save(participant);
     return participant;
   }
