@@ -67,10 +67,7 @@ export class AgendaItemsService {
       );
     }
     try {
-      await this.agendaItemRepository.delete({
-        meetingId,
-        position,
-      });
+      await this.agendaItemRepository.remove(agendaItemToBeDeleted);
       await this.updateAgendaItemsPosition(meetingId, position);
     } catch (err) {
       throw new BadRequestException(err.message);
