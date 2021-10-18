@@ -53,24 +53,14 @@ export class AgendaItemsService {
     });
   }
 
-  public async getOneByMeetingIdAndPosition(
-    meetingId: string,
-    position: number,
-  ): Promise<AgendaItem> {
-    return this.agendaItemRepository.findOne({
-      meetingId,
-      position,
-    });
-  }
-
   public async deleteAgendaItemByMeetingIdAndPosition(
     meetingId: string,
     position: number,
   ) {
-    const agendaItemToBeDeleted = await this.getOneByMeetingIdAndPosition(
+    const agendaItemToBeDeleted = await this.agendaItemRepository.findOne({
       meetingId,
       position,
-    );
+    });
     if (!agendaItemToBeDeleted) {
       throw new NotFoundException(
         `Agenda Item with meetingId ${meetingId} and position ${position} not found`,
