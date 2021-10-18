@@ -3,6 +3,7 @@ import { AgendaItem } from './../agenda-items/agenda-item.entity';
 import * as bcrypt from 'bcrypt';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -69,6 +70,15 @@ export class MeetingsService {
   }
 
   public async createMeeting(createMeetingDto: CreateMeetingDto, host: User) {
+    // check zoom meeting
+    if (createMeetingDto.zoomUuid) {
+      const zoomMeeting = await this.meetingRepository.findOne({
+        zoomUuid: createMeetingDto.zoomUuid,
+      });
+      if (zoomMeeting)
+        throw new ConflictException('Zoom meeting already exist');
+    }
+
     const meetingToCreate = this.meetingRepository.create({
       ...createMeetingDto,
       host,
@@ -89,8 +99,12 @@ export class MeetingsService {
         },
       ],
     });
-    const createdMeeting = await this.meetingRepository.save(meetingToCreate);
-    return this.findOneById(createdMeeting.id, true);
+    try {
+      const createdMeeting = await this.meetingRepository.save(meetingToCreate);
+      return this.findOneById(createdMeeting.id, true);
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
   }
 
   public async updateMeeting(

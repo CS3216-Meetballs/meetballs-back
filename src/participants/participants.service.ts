@@ -46,12 +46,14 @@ export class ParticipantsService {
       meetingId,
       userEmail,
     });
-    if (participant) {
+    if (participant && !participant.isDuplicate) {
       throw new BadRequestException(
         `Participant with email ${userEmail} is already added into this meeting`,
       );
     }
     const participantToBeCreated = this.participantsRepository.create({
+      id: participant?.id || undefined,
+      isDuplicate: false,
       ...createParticipantDto,
     });
     return this.participantsRepository.save(participantToBeCreated);
@@ -160,6 +162,25 @@ export class ParticipantsService {
     }
 
     participant.timeJoined = null;
+    await this.participantsRepository.save(participant);
+    return participant;
+  }
+
+  public async markDuplicate(
+    meetingId: string,
+    participantEmailDto: ParticipantEmailDto,
+  ): Promise<Participant> {
+    const participant = await this.participantsRepository.findOne({
+      meetingId,
+      userEmail: participantEmailDto.email,
+    });
+    if (!participant) {
+      throw new NotFoundException('Participant not found');
+    }
+
+    participant.isDuplicate = true;
+    participant.timeJoined = null;
+    participant.invited = false;
     await this.participantsRepository.save(participant);
     return participant;
   }

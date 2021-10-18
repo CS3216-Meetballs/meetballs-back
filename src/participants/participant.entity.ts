@@ -4,7 +4,6 @@ import { IsEmail } from 'class-validator';
 import {
   Column,
   Entity,
-  Generated,
   Index,
   JoinColumn,
   ManyToOne,
@@ -45,6 +44,9 @@ export class Participant {
     default: ParticipantRole.CONFERENCE_MEMBER,
   })
   role?: number;
+
+  @Column({ type: 'boolean', default: false })
+  isDuplicate: boolean;
 
   @Column({
     type: 'boolean',
