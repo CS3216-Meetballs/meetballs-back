@@ -35,10 +35,6 @@ export class CreateAgendaItemDto {
 
   @IsString()
   @IsOptional()
-  speakerName: string;
-
-  @IsString()
-  @IsOptional()
   speakerId: string;
 
   @IsString()

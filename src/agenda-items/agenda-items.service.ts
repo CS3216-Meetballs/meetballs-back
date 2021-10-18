@@ -117,20 +117,14 @@ export class AgendaItemsService {
       );
     }
     try {
-      await this.agendaItemRepository
-        .createQueryBuilder()
-        .update(AgendaItem)
-        .set({
-          ...updateAgendaItemDto,
-          speakerId: updateAgendaItemDto.speakerId || null,
-          speakerMaterials: updateAgendaItemDto.speakerMaterials || null,
-          speakerName: updateAgendaItemDto.speakerName || null,
-        })
-        .where({
-          meetingId,
-          position,
-        })
-        .execute();
+      const { speakerId, ...updateDetails } = updateAgendaItemDto;
+      const newAgenda = this.agendaItemRepository.create({
+        ...agendaItemToUpdate,
+        ...updateDetails,
+        speaker: speakerId ? { id: speakerId } : null,
+      });
+      console.log(newAgenda, speakerId);
+      await this.agendaItemRepository.save(newAgenda);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
