@@ -62,6 +62,10 @@ export class CreateMeetingDto {
   @IsBoolean()
   enableTranscription: boolean;
 
+  @IsOptional()
+  @IsString()
+  zoomUuid: string;
+
   @ValidateIf((obj) => !isNil(obj.participants))
   @IsArray()
   @Type(() => CreateParticipantMinimalDto)
