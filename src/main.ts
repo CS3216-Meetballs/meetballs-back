@@ -3,6 +3,8 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import * as morgan from 'morgan';
+import * as helmet from 'helmet';
+import * as compression from 'compression';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +14,13 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
+
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+    }),
+  );
+  app.use(compression());
 
   if (
     process.env['NODE_ENV'] === 'development' ||

@@ -53,34 +53,21 @@ export class AgendaItemsService {
     });
   }
 
-  public async getOneByMeetingIdAndPosition(
-    meetingId: string,
-    position: number,
-  ): Promise<AgendaItem> {
-    return this.agendaItemRepository.findOne({
-      meetingId,
-      position,
-    });
-  }
-
   public async deleteAgendaItemByMeetingIdAndPosition(
     meetingId: string,
     position: number,
   ) {
-    const agendaItemToBeDeleted = await this.getOneByMeetingIdAndPosition(
+    const agendaItemToBeDeleted = await this.agendaItemRepository.findOne({
       meetingId,
       position,
-    );
+    });
     if (!agendaItemToBeDeleted) {
       throw new NotFoundException(
         `Agenda Item with meetingId ${meetingId} and position ${position} not found`,
       );
     }
     try {
-      await this.agendaItemRepository.delete({
-        meetingId,
-        position,
-      });
+      await this.agendaItemRepository.remove(agendaItemToBeDeleted);
       await this.updateAgendaItemsPosition(meetingId, position);
     } catch (err) {
       throw new BadRequestException(err.message);
@@ -123,7 +110,6 @@ export class AgendaItemsService {
         ...updateDetails,
         speaker: speakerId ? { id: speakerId } : null,
       });
-      console.log(newAgenda, speakerId);
       await this.agendaItemRepository.save(newAgenda);
     } catch (err) {
       throw new BadRequestException(err.message);
