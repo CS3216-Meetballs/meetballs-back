@@ -81,15 +81,11 @@ export class MeetingsController {
     @Usr() requester: User,
     @Body() createMeetingDto: CreateMeetingDto,
   ) {
-    try {
-      const createdMeeting = await this.meetingsService.createMeeting(
-        createMeetingDto,
-        requester,
-      );
-      return createdMeeting;
-    } catch (err) {
-      throw new BadRequestException(err.message);
-    }
+    const createdMeeting = await this.meetingsService.createMeeting(
+      createMeetingDto,
+      requester,
+    );
+    return createdMeeting;
   }
 
   @ApiCreatedResponse({
