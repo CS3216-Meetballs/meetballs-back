@@ -41,7 +41,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.use(morgan('tiny'));
 
-  if (['production', 'staging'].indexOf(process.env.NODE_ENV) >= 0) {
+  if (['production', 'staging'].indexOf(process.env.NODE_ENV) === -1) {
     const config = new DocumentBuilder()
       .setTitle('MeetBalls')
       .setDescription("API endpoint for MeetBall's backend")
