@@ -54,8 +54,6 @@ services:
       # Database Configuration
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres
       - DB_SYNCHRONIZE=true
-      # App variables
-      - CLIENT_URL=http://localhost:3000
       # Seeder
       - SEEDER_SHOULD_SEED=true
       # Object Storage Configuration
