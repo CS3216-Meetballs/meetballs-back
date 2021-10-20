@@ -15,11 +15,7 @@ async function bootstrap() {
     }),
   );
 
-  app.use(
-    helmet({
-      contentSecurityPolicy: false,
-    }),
-  );
+  app.use(helmet({}));
   app.use(compression());
 
   if (
