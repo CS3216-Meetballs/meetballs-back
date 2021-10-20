@@ -88,7 +88,7 @@ export class AgendaItemsController {
   @ApiBody({
     type: UpdateAgendaItemDto,
   })
-  @UseBearerAuth()
+  // @UseBearerAuth()
   @Put('/:meetingUuid/:position')
   public async updateAgendaItemByPosition(
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
