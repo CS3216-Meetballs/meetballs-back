@@ -21,6 +21,8 @@ export class User {
   @Column({ type: 'varchar' })
   @Unique('unique_user_email', ['email'])
   @IsEmail()
+  @Exclude()
+  @ApiHideProperty()
   email: string;
 
   @Column({ default: false })
