@@ -35,18 +35,13 @@ export class AuthService {
     private readonly appConfigService: AppConfigService,
     private readonly zoomConfigService: ZoomConfigService,
     private readonly httpService: HttpService,
-  ) {
-    // this.httpService.axiosRef.interceptors.request.use(
-    //   (config) => console.log(config),
-    //   (error) => Promise.reject(error),
-    // );
-  }
+  ) {}
 
   getZoomToken(code: string): Observable<JwtResponseDto & { scope: string }> {
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: 'https://meetballsapp.com/authorize',
+      redirect_uri: `${this.appConfigService.values.clientUrl}/authorize`,
     });
     return this.makeTokenRequest(params);
   }

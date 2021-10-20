@@ -15,11 +15,7 @@ async function bootstrap() {
     }),
   );
 
-  app.use(
-    helmet({
-      contentSecurityPolicy: false,
-    }),
-  );
+  app.use(helmet({}));
   app.use(compression());
 
   if (
@@ -41,15 +37,17 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.use(morgan('tiny'));
 
-  const config = new DocumentBuilder()
-    .setTitle('MeetBalls')
-    .setDescription("API endpoint for MeetBall's backend")
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  if (['production', 'staging'].indexOf(process.env.NODE_ENV) === -1) {
+    const config = new DocumentBuilder()
+      .setTitle('MeetBalls')
+      .setDescription("API endpoint for MeetBall's backend")
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
 
-  const swaggerDoc = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, swaggerDoc);
+    const swaggerDoc = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, swaggerDoc);
+  }
 
   await app.listen(process.env.PORT || 3001);
 }

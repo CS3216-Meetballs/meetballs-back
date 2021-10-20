@@ -1,36 +1,25 @@
-import { map, mergeMap, Observable, catchError } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import {
   Body,
-  ConflictException,
   Controller,
   ForbiddenException,
   Get,
-  NotFoundException,
   Param,
   ParseIntPipe,
   Post,
 } from '@nestjs/common';
-import {
-  ApiBody,
-  ApiExcludeEndpoint,
-  ApiParam,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { ZoomService } from './zoom.service';
-import { Meeting } from '../meetings/meeting.entity';
-import { User } from '../users/user.entity';
 
 import { ZoomMeetingDto } from './dtos/zoom-meeting.dto';
 import { MinZoomMeetingDto } from './dtos/zoom-meeting-list.dto';
 import { ZoomDeauthorizeSubscriptionDto } from './dtos/zoom-deauthorization-event.dto';
-import { ZoomMeetingOptionsDto } from './dtos/zoom-meeting-options.dto';
 import { ZoomJoinedSubscriptionDto } from './dtos/zoom-participant-event.dto';
 import { ZoomRecordingSubscriptionDto } from './dtos/zoom-recording-event.dto';
 
 import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { AuthBearerToken } from '../shared/decorators/auth-header.decorator';
-import { Usr } from '../shared/decorators/user.decorator';
 import { ZoomSubscriptionGuard } from './guard/zoom-subscription.guard';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 
@@ -70,44 +59,6 @@ export class ZoomController {
     @Param('meetingId', ParseIntPipe) meetingId: number,
   ): Observable<ZoomMeetingDto> {
     return this.zoomService.getMeeting(meetingId, token);
-  }
-
-  /**
-   * Link zoom meeting to MeetBalls
-   */
-  @ApiParam({
-    name: 'meetingId',
-    description: 'The numeric zoom meeting id provided by GET (not uuid)',
-  })
-  @ApiBody({
-    type: ZoomMeetingOptionsDto,
-    description: 'Additional options (optional)',
-  })
-  @UseBearerAuth()
-  @Post('meetings/:meetingId')
-  public linkZoomMeeting(
-    @Usr() requester: User,
-    @AuthBearerToken() token: string,
-    @Param('meetingId', ParseIntPipe) meetingId: number,
-    @Body() options: ZoomMeetingOptionsDto,
-  ): Observable<Meeting> {
-    return this.zoomService.getMeeting(meetingId, token).pipe(
-      catchError((err) => {
-        console.log('Create Meeting error:', err);
-        throw new NotFoundException('Zoom meeting not found');
-      }),
-      mergeMap((meetingDetails) =>
-        this.zoomService.createFromZoomMeeting(
-          meetingDetails,
-          requester,
-          options,
-        ),
-      ),
-      catchError((err) => {
-        console.log('Meeting already created:', err);
-        throw new ConflictException('Zoom meeting already created');
-      }),
-    );
   }
 
   /**

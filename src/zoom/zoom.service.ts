@@ -1,12 +1,11 @@
 import { catchError, map, Observable } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { ForbiddenException, HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 
 import { ZoomMeetingDto } from './dtos/zoom-meeting.dto';
 import { ZoomMeetingListDto } from './dtos/zoom-meeting-list.dto';
-import { ZoomMeetingOptionsDto } from './dtos/zoom-meeting-options.dto';
 import { ZoomDeauthorizePayload } from './dtos/zoom-deauthorization-event.dto';
 import { ZoomJoinMeetingPayload } from './dtos/zoom-participant-event.dto';
 import { ZoomRecordingMeetingPayload } from './dtos/zoom-recording-event.dto';
@@ -62,57 +61,6 @@ export class ZoomService {
           throw new HttpException(e.response.data, e.response.status);
         }),
       );
-  }
-
-  createFromZoomMeeting(
-    meetingDetails: ZoomMeetingDto,
-    host: User,
-    options: ZoomMeetingOptionsDto,
-  ): Promise<Meeting> {
-    if (host.zoomId !== meetingDetails.host_id) {
-      throw new ForbiddenException('User not meeting host');
-    }
-
-    const {
-      uuid,
-      topic,
-      agenda,
-      start_time,
-      duration,
-      id,
-      join_url,
-      password,
-    } = meetingDetails;
-
-    const meetingToCreate = this.meetingRepository.create({
-      name: options?.name || topic,
-      description: options?.description || agenda,
-      startedAt: new Date(start_time),
-      host,
-      duration: options?.duration || duration,
-      meetingId: `${id}`,
-      meetingPassword: password,
-      joinUrl: join_url,
-      zoomUuid: uuid,
-      enableTranscription: options?.enableTranscription || false,
-      participants: options?.participants || [
-        {
-          userEmail: host.email,
-          userName: host.firstName,
-          role: ParticipantRole.ADMIN,
-          invited: true,
-        },
-      ],
-      agendaItems: options.agendaItems || [
-        {
-          position: 0,
-          name: 'Your 1st meeting item',
-          description: 'Click the edit button to edit this agenda item',
-          expectedDuration: 1800000, // 30min
-        },
-      ],
-    });
-    return this.meetingRepository.save(meetingToCreate);
   }
 
   async deauthorizeUser(payload: ZoomDeauthorizePayload) {

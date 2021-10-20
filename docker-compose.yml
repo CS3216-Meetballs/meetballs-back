@@ -4,26 +4,26 @@ services:
     image: nginx
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-    ports: 
+    ports:
       - 9000:80
-    depends_on: 
+    depends_on:
       - s3
 
   s3:
     image: minio/minio:latest
-    volumes: 
+    volumes:
       - s3:/data
-    command: server /data --console-address=":9001" 
-    environment: 
+    command: server /data --console-address=":9001"
+    environment:
       - MINIO_ROOT_USER=access_key
       - MINIO_ROOT_PASSWORD=secret_key
-    ports: 
+    ports:
       - 9001:9001
 
   # Creates buckets and sets policy for viewing objects
   setup-s3:
     image: minio/mc
-    depends_on: 
+    depends_on:
       - s3
     entrypoint: >
       /bin/sh -c "
@@ -32,32 +32,37 @@ services:
       /usr/bin/mc mb --quiet s3/meetballs-bucket;
       exit 0;
       "
-  
+
   postgres:
     image: postgres
-    environment: 
+    environment:
       - POSTGRES_PASSWORD=postgres
-    volumes: 
+    volumes:
       - postgres:/var/lib/postgresql/data
-    ports: 
+    ports:
       - 5432:5432
-  
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    depends_on: 
+    depends_on:
       - postgres
       - s3
       - setup-s3
-    environment: 
+    environment:
       # Database Configuration
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres
       - DB_SYNCHRONIZE=true
-      # App variables
-      - CLIENT_URL=http://localhost:3000
       # Seeder
       - SEEDER_SHOULD_SEED=true
+      # Development keys
+      - JWT_ACCESS_TOKEN_SECRET=accSecret
+      - JWT_REFRESH_TOKEN_SECRET=refSecret
+      - JWT_MAIL_VERIFY_SECRET=mailSecret
+      - JWT_PASSWORD_RESET_SECRET=pwSecret
+      - MAGIC_LINK_SECRET=magicSecret
+      - MEETING_SECRET=meetingSecret
       # Object Storage Configuration
       - AWS_REGION=ap-southeast-1
       - AWS_S3_ENDPOINT=http://localhost:9000
@@ -65,12 +70,13 @@ services:
       - AWS_SECRET_ACCESS_KEY=secret_key
       - AWS_S3_SIGNATURE_VERSION=v4
       - AWS_S3_BUCKET_NAME=meetballs-bucket
-    ports: 
+    ports:
       - 3001:3001
-    volumes: 
-      - /app/node_modules
+    volumes:
+      - meetballs_node_modules:/app/node_modules
       - .:/app
 
-volumes: 
+volumes:
   postgres:
   s3:
+  meetballs_node_modules:
