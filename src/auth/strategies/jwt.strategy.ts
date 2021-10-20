@@ -1,13 +1,9 @@
 import { HttpService } from '@nestjs/axios';
 import { Strategy } from 'passport-custom';
 import { PassportStrategy } from '@nestjs/passport';
-import { catchError, firstValueFrom, map, Observable } from 'rxjs';
+import { catchError, firstValueFrom, map } from 'rxjs';
 import { JwtService } from '@nestjs/jwt';
-import {
-  Injectable,
-  UnauthorizedException,
-  HttpException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
 
 import { JwtConfigService } from '../../config/jwt.config';
