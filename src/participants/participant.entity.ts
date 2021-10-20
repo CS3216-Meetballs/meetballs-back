@@ -7,10 +7,12 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Meeting } from '../meetings/meeting.entity';
 import { ParticipantRole } from '../shared/enum/participant-role.enum';
+import { AgendaItem } from '../agenda-items/agenda-item.entity';
 
 @Entity({ name: 'participants' })
 @Index(['userEmail', 'meetingId'], { unique: true })
@@ -31,6 +33,9 @@ export class Participant {
   })
   @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
   meeting: Meeting;
+
+  @OneToMany(() => AgendaItem, (agenda: AgendaItem) => agenda.speaker)
+  agenda: AgendaItem[];
 
   @Column({ type: 'varchar', nullable: true })
   userName?: string;
