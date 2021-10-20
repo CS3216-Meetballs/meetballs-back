@@ -13,6 +13,7 @@ export const jwtConfig = registerAs('jwt', () => ({
   password_reset_secret: env.JWT_PASSWORD_RESET_SECRET, // in seconds
   password_reset_expiry: env.JWT_PASSWORD_RESET_EXPIRATION_TIME,
   magic_link_secret: env.MAGIC_LINK_SECRET,
+  meeting_secret: env.MEETING_SECRET,
 }));
 
 @Injectable()
@@ -56,6 +57,12 @@ export class JwtConfigService {
   public get magicLinkTokenOptions() {
     return {
       secret: this.config.magic_link_secret,
+    };
+  }
+
+  public get meetingSecret() {
+    return {
+      secret: this.config.meeting_secret,
     };
   }
 }

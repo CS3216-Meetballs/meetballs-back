@@ -73,44 +73,6 @@ export class ZoomController {
   }
 
   /**
-   * Link zoom meeting to MeetBalls
-   */
-  @ApiParam({
-    name: 'meetingId',
-    description: 'The numeric zoom meeting id provided by GET (not uuid)',
-  })
-  @ApiBody({
-    type: ZoomMeetingOptionsDto,
-    description: 'Additional options (optional)',
-  })
-  @UseBearerAuth()
-  @Post('meetings/:meetingId')
-  public linkZoomMeeting(
-    @Usr() requester: User,
-    @AuthBearerToken() token: string,
-    @Param('meetingId', ParseIntPipe) meetingId: number,
-    @Body() options: ZoomMeetingOptionsDto,
-  ): Observable<Meeting> {
-    return this.zoomService.getMeeting(meetingId, token).pipe(
-      catchError((err) => {
-        console.log('Create Meeting error:', err);
-        throw new NotFoundException('Zoom meeting not found');
-      }),
-      mergeMap((meetingDetails) =>
-        this.zoomService.createFromZoomMeeting(
-          meetingDetails,
-          requester,
-          options,
-        ),
-      ),
-      catchError((err) => {
-        console.log('Meeting already created:', err);
-        throw new ConflictException('Zoom meeting already created');
-      }),
-    );
-  }
-
-  /**
    * Deauthorize user
    */
   @ApiExcludeEndpoint()

@@ -21,6 +21,7 @@ import { JwtConfigService } from 'src/config/jwt.config';
 import { Participant } from 'src/participants/participant.entity';
 import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
 import { User } from 'src/users/user.entity';
+import { randomBytes, createCipheriv, scryptSync } from 'crypto';
 
 @Injectable()
 export class MeetingsService {
@@ -78,9 +79,25 @@ export class MeetingsService {
       if (zoomMeeting)
         throw new ConflictException('Zoom meeting already exist');
     }
+    const key = scryptSync(
+      this.jwtConfigService.meetingSecret.secret,
+      'salt',
+      32,
+    );
+
+    const iv = randomBytes(16);
+    const cipher = createCipheriv('aes-256-ctr', key, iv);
+    const encryptedPassword = [
+      Buffer.concat([
+        cipher.update(createMeetingDto.meetingPassword),
+        cipher.final(),
+      ]).toString('base64'),
+      Buffer.from(iv).toString('base64'),
+    ].join('|');
 
     const meetingToCreate = this.meetingRepository.create({
       ...createMeetingDto,
+      meetingPassword: encryptedPassword,
       host,
       participants: createMeetingDto.participants || [
         {
