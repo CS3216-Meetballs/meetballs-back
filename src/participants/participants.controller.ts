@@ -239,10 +239,6 @@ export class ParticipantsController {
           userEmail,
         );
 
-        if (participant.invited) {
-          throw new Error('Participant already invited');
-        }
-
         await this.participantsService.sendOneInvite(
           participant,
           participant.meeting,
