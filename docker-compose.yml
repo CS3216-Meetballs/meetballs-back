@@ -56,6 +56,13 @@ services:
       - DB_SYNCHRONIZE=true
       # Seeder
       - SEEDER_SHOULD_SEED=true
+      # Development keys
+      - JWT_ACCESS_TOKEN_SECRET=accSecret
+      - JWT_REFRESH_TOKEN_SECRET=refSecret
+      - JWT_MAIL_VERIFY_SECRET=mailSecret
+      - JWT_PASSWORD_RESET_SECRET=pwSecret
+      - MAGIC_LINK_SECRET=magicSecret
+      - MEETING_SECRET=meetingSecret
       # Object Storage Configuration
       - AWS_REGION=ap-southeast-1
       - AWS_S3_ENDPOINT=http://localhost:9000

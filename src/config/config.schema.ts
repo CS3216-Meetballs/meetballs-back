@@ -23,6 +23,7 @@ export default Joi.object({
   JWT_PASSWORD_RESET_SECRET: Joi.string().required(),
   JWT_PASSWORD_RESET_EXPIRATION_TIME: Joi.string().default('600'), // in seconds
   MAGIC_LINK_SECRET: Joi.string().required(),
+  MEETING_SECRET: Joi.string().required(),
 
   SEEDER_SHOULD_SEED: Joi.boolean().default(false),
 

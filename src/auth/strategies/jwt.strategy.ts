@@ -42,23 +42,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
   }
 
-  getUser(zoomToken: string): Observable<ZoomUser> {
-    return this.httpService
-      .get(`/v2/users/me`, {
-        baseURL: 'https://api.zoom.us',
-        headers: {
-          Authorization: `Bearer ${zoomToken}`,
-          'Content-type': 'application/json',
-        },
-      })
-      .pipe(
-        map((res) => res.data as ZoomUser),
-        catchError((e) => {
-          throw new HttpException(e.response.data, e.response.status);
-        }),
-      );
-  }
-
   private async validateZoom(jwtToken: string): Promise<User> {
     const zoomUser = await firstValueFrom(
       this.httpService

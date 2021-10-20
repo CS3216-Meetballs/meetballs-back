@@ -48,8 +48,8 @@ export class Meeting {
   @Column({ type: 'varchar' })
   meetingId: string;
 
-  @Column({ type: 'varchar' })
-  meetingPassword: string;
+  @Column({ type: 'varchar', nullable: true })
+  meetingPassword?: string;
 
   @Column({ type: 'varchar' })
   @IsUrl()
