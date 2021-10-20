@@ -4,7 +4,6 @@ import {
   Param,
   Post,
   Body,
-  BadRequestException,
   Put,
   Delete,
   Query,
@@ -28,7 +27,6 @@ import { MeetingsService } from './meetings.service';
 import { Meeting } from './meeting.entity';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
-import { Participant } from 'src/participants/participant.entity';
 import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
 
 @ApiTags('Meeting')
