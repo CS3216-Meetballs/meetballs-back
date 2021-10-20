@@ -41,7 +41,7 @@ export class AuthService {
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: `${this.appConfigService.clientUrl}/authorize`,
+      redirect_uri: `${this.appConfigService.values.clientUrl}/authorize`,
     });
     return this.makeTokenRequest(params);
   }
