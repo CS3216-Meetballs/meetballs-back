@@ -21,7 +21,6 @@ export class UploadsController {
       'Successfully get the signed URL and image URL for uploading of cat image',
     type: UploadResponse,
   })
-  @UseBearerAuth()
   @Get('/write/:meetingUuid')
   getUploadLink(
     @Param('meetingUuid') meetingId: string,
