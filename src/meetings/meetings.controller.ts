@@ -1,3 +1,4 @@
+import { AuthGuard } from '@nestjs/passport';
 import { AccessUser } from './../shared/decorators/participant.decorator';
 import { AccessGuard } from './../participants/guard/access.guard';
 import {
@@ -53,6 +54,29 @@ export class MeetingsController {
       requester.uuid,
     );
     return meeting;
+  }
+
+  @ApiOkResponse({
+    type: GetMeetingViaMagicLinkDto,
+    description: 'Meeting with meetingId and information of joiner',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid token',
+  })
+  @ApiBody({
+    description:
+      'JWT Token containing info on the userEmail, username and meetingId',
+  })
+  @UseAuth(AuthGuard('participant'))
+  @Get('/magic-link')
+  public async getMeetingViaMagicLink(
+    @AccessUser() participant: Participant,
+  ): Promise<GetMeetingViaMagicLinkDto> {
+    const meeting = await this.meetingsService.findOneById(
+      participant.meetingId,
+      true,
+    );
+    return { meeting, joiner: participant };
   }
 
   @ApiOkResponse({
@@ -189,24 +213,5 @@ export class MeetingsController {
     const meeting = await this.meetingsService.endMeeting(id, requesterId);
     this.meetingGateway.emitMeetingUpdated(id, meeting);
     return;
-  }
-
-  @ApiOkResponse({
-    type: GetMeetingViaMagicLinkDto,
-    description: 'Meeting with meetingId and information of joiner',
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid token',
-  })
-  @ApiParam({
-    name: 'token',
-    description:
-      'JWT Token containing info on the userEmail, username and meetingId',
-  })
-  @Get('/magic-link/:token')
-  public async getMeetingViaMagicLink(
-    @Param('token') token: string,
-  ): Promise<GetMeetingViaMagicLinkDto> {
-    return this.meetingsService.getMeetingViaMagicLink(token);
   }
 }

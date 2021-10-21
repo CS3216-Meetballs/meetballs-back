@@ -280,47 +280,6 @@ export class MeetingsService {
     return targetMeeting;
   }
 
-  public async getMeetingViaMagicLink(
-    token: string,
-  ): Promise<GetMeetingViaMagicLinkDto> {
-    let payload: GenerateParticipantMagicLinkPayload;
-    try {
-      payload = this.jwtService.verify<GenerateParticipantMagicLinkPayload>(
-        token,
-        { secret: this.jwtConfigService.magicLinkTokenOptions.secret },
-      );
-    } catch (error) {
-      throw new ForbiddenException('Cannot access meeting');
-    }
-    const { meetingId, userEmail } = payload;
-    const meeting = await this.findOneById(meetingId, true);
-    if (!meeting) {
-      // Meeting deleted
-      throw new NotFoundException('Meeting not found');
-    }
-    const joiner: Participant = meeting.participants.find(
-      (participant) => participant.userEmail === userEmail,
-    );
-    console.log('JOINER', joiner);
-    if (!joiner) {
-      // Participant deleted
-      throw new NotFoundException('Participant not found');
-    }
-    const isMatch = await bcrypt.compare(
-      token,
-      joiner.hashedMagicLinkToken ?? '',
-    );
-    if (!isMatch) {
-      throw new BadRequestException(
-        'Invalid link, please use the link from your latest invitation',
-      );
-    }
-    return {
-      meeting,
-      joiner,
-    };
-  }
-
   public async isHostOfMeeting(hostId: string, id: string): Promise<boolean> {
     const meeting = await this.meetingRepository.findOne({ id, hostId });
     return !!meeting;
