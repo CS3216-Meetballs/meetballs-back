@@ -11,9 +11,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
 import { AppConfigModule } from '../config/config.module';
-import { AppConfigService } from '../config/app.config';
-import { JwtConfigService } from '../config/jwt.config';
-import { ZoomConfigService } from './../config/zoom.config';
 
 import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
@@ -34,15 +31,7 @@ import { MailModule } from '../mail/mail.module';
       },
     }),
   ],
-  providers: [
-    AuthService,
-    LocalStrategy,
-    JwtStrategy,
-    JwtRefreshStrategy,
-    JwtConfigService,
-    AppConfigService,
-    ZoomConfigService,
-  ],
+  providers: [AuthService, LocalStrategy, JwtStrategy, JwtRefreshStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })

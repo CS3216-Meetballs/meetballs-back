@@ -58,10 +58,7 @@ export class MeetingSocketGateway
     );
   }
 
-  emitParticipantsUpdated(
-    meetingId: string,
-    participant: Participant | Participant[],
-  ) {
+  emitParticipantsUpdated(meetingId: string, participant: Participant) {
     return this.server
       .to(meetingId)
       .emit('participantUpdated', JSON.stringify(classToPlain(participant)));

@@ -90,24 +90,27 @@ export class AgendaItemsService {
       .execute();
   }
 
-  public async updateAgendaItemByMeetingIdAndPosition(
+  public async getAgendaItemByMeetingIdAndPosition(
     meetingId: string,
     position: number,
+  ): Promise<AgendaItem> {
+    return this.agendaItemRepository.findOne(
+      {
+        meetingId,
+        position,
+      },
+      { relations: ['meeting'] },
+    );
+  }
+  public async updateAgendaItemByMeetingIdAndPosition(
+    targetAgenda: AgendaItem,
     updateAgendaItemDto: UpdateAgendaItemDto,
   ): Promise<void> {
-    const agendaItemToUpdate = await this.agendaItemRepository.findOne({
-      meetingId,
-      position,
-    });
-    if (!agendaItemToUpdate) {
-      throw new NotFoundException(
-        `Agenda Item with meetingId ${meetingId} and position ${position} not found`,
-      );
-    }
     try {
       const { speakerId, ...updateDetails } = updateAgendaItemDto;
+      delete targetAgenda.meeting;
       const newAgenda = this.agendaItemRepository.create({
-        ...agendaItemToUpdate,
+        ...targetAgenda,
         ...updateDetails,
         speaker: speakerId ? { id: speakerId } : null,
       });

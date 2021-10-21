@@ -1,6 +1,5 @@
 import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 import { AgendaItem } from './../agenda-items/agenda-item.entity';
-import * as bcrypt from 'bcrypt';
 import {
   BadRequestException,
   ConflictException,
@@ -15,11 +14,8 @@ import { Meeting } from './meeting.entity';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { ZoomMeetingStatus } from '../shared/enum/zoom-meeting-status.enum';
 import { isArray } from 'lodash';
-import { GenerateParticipantMagicLinkPayload } from 'src/shared/interface/generate-participant-magic-link.interface';
 import { JwtService } from '@nestjs/jwt';
 import { JwtConfigService } from 'src/config/jwt.config';
-import { Participant } from 'src/participants/participant.entity';
-import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
 import { User } from 'src/users/user.entity';
 import { randomBytes, createCipheriv, scryptSync } from 'crypto';
 
@@ -280,44 +276,8 @@ export class MeetingsService {
     return targetMeeting;
   }
 
-  public async getMeetingViaMagicLink(
-    token: string,
-  ): Promise<GetMeetingViaMagicLinkDto> {
-    let payload: GenerateParticipantMagicLinkPayload;
-    try {
-      payload = this.jwtService.verify<GenerateParticipantMagicLinkPayload>(
-        token,
-        { secret: this.jwtConfigService.magicLinkTokenOptions.secret },
-      );
-    } catch (error) {
-      throw new BadRequestException('Invalid token');
-    }
-    const { meetingId, userEmail } = payload;
-    const meeting = await this.findOneById(meetingId, true);
-    if (!meeting) {
-      // Meeting deleted
-      throw new NotFoundException('Meeting not found');
-    }
-    const joiner: Participant = meeting.participants.find(
-      (participant) => participant.userEmail === userEmail,
-    );
-    console.log('JOINER', joiner);
-    if (!joiner) {
-      // Participant deleted
-      throw new NotFoundException('Participant not found');
-    }
-    const isMatch = await bcrypt.compare(
-      token,
-      joiner.hashedMagicLinkToken ?? '',
-    );
-    if (!isMatch) {
-      throw new BadRequestException(
-        'Invalid link, please use the link from your latest invitation',
-      );
-    }
-    return {
-      meeting,
-      joiner,
-    };
+  public async isHostOfMeeting(hostId: string, id: string): Promise<boolean> {
+    const meeting = await this.meetingRepository.findOne({ id, hostId });
+    return !!meeting;
   }
 }
