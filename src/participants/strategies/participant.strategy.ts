@@ -1,15 +1,13 @@
-import { Strategy } from 'passport-custom';
-import { PassportStrategy } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Request } from 'express';
+import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { PassportStrategy } from '@nestjs/passport';
+import { Strategy } from 'passport-custom';
+import { Request } from 'express';
 
 import { JwtConfigService } from '../../config/jwt.config';
 import { GenerateParticipantMagicLinkPayload } from '../../shared/interface/generate-participant-magic-link.interface';
-import { Participant } from '../../participants/participant.entity';
 import { ParticipantsService } from '../participants.service';
-
 @Injectable()
 export class ParticipantStrategy extends PassportStrategy(
   Strategy,
@@ -23,10 +21,12 @@ export class ParticipantStrategy extends PassportStrategy(
     super();
   }
 
-  async validate(request: Request): Promise<Participant> {
+  async authenticate(request: Request): Promise<void> {
+    console.log('Validating participant');
     const magicToken = request.headers['x-participant'] as string;
     if (!magicToken) {
-      throw new UnauthorizedException('No valid token');
+      this.fail('No valid token', 401);
+      return;
     }
     let payload: GenerateParticipantMagicLinkPayload;
     try {
@@ -38,7 +38,8 @@ export class ParticipantStrategy extends PassportStrategy(
         },
       );
     } catch (error) {
-      throw new UnauthorizedException('Invalid token');
+      this.fail('Invalid token', 401);
+      return;
     }
 
     const { meetingId, userEmail } = payload;
@@ -47,7 +48,8 @@ export class ParticipantStrategy extends PassportStrategy(
       userEmail,
     );
     if (!participant) {
-      throw new UnauthorizedException('Invalid token');
+      this.fail('Invalid token', 401);
+      return;
     }
 
     const isMatch = await bcrypt.compare(
@@ -55,9 +57,11 @@ export class ParticipantStrategy extends PassportStrategy(
       participant.hashedMagicLinkToken ?? '',
     );
     if (!isMatch) {
-      throw new UnauthorizedException('Token expired');
+      this.fail('Token expired', 401);
+      return;
     }
 
-    return participant;
+    this.success(participant);
+    return;
   }
 }

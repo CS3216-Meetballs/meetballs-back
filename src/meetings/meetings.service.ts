@@ -321,10 +321,8 @@ export class MeetingsService {
     };
   }
 
-  public async isHostOfMeeting(
-    hostId: string,
-    meetingId: string,
-  ): Promise<boolean> {
-    return !!(await this.meetingRepository.findOne({ hostId, meetingId }));
+  public async isHostOfMeeting(hostId: string, id: string): Promise<boolean> {
+    const meeting = await this.meetingRepository.findOne({ id, hostId });
+    return !!meeting;
   }
 }
