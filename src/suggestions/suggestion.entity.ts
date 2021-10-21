@@ -1,4 +1,3 @@
-import { IsEmail } from 'class-validator';
 import { Participant } from 'src/participants/participant.entity';
 import {
   Column,
