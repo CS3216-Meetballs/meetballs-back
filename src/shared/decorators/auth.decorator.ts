@@ -6,6 +6,7 @@ import { IAuthGuard } from '@nestjs/passport';
 export function UseAuth(...guards: (Type<CanActivate> | Type<IAuthGuard>)[]) {
   return applyDecorators(
     UseGuards(...guards),
+    ApiBearerAuth(),
     ApiUnauthorizedResponse({ description: 'Unauthorized' }),
   );
 }

@@ -24,6 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(request: Request): Promise<User> {
+    console.log('Validating user');
     const bearerHeader = request.headers['authorization'];
     const authType = request.headers['x-auth-type'];
     if (!bearerHeader) {

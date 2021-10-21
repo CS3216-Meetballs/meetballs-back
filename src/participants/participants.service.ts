@@ -14,7 +14,6 @@ import { AppConfigService } from 'src/config/app.config';
 import { JwtConfigService } from 'src/config/jwt.config';
 import { MailService } from 'src/mail/mail.service';
 import { Meeting } from 'src/meetings/meeting.entity';
-import { GenerateParticipantMagicLinkPayload } from 'src/shared/interface/generate-participant-magic-link.interface';
 import { In, Repository } from 'typeorm';
 import {
   CreateParticipantDto,
@@ -22,10 +21,11 @@ import {
 } from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
 import { ParticipantEmailDto } from './dto/participant-email.dto';
-import { UpdateParticipantsDto } from './dto/update-participants.dto';
+import { UpdateParticipantDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { User } from 'src/users/user.entity';
 import { isNil } from 'lodash';
+import { Version1MagicPayload } from './../shared/interface/generate-participant-magic-link.interface';
 
 @Injectable()
 export class ParticipantsService {
@@ -94,33 +94,26 @@ export class ParticipantsService {
     }
   }
 
-  public async updateParticipants(
-    updateParticipantsDto: UpdateParticipantsDto,
-  ): Promise<void> {
-    const { participants, meetingId } = updateParticipantsDto;
-    const listOfUserEmails = [...participants].map(
-      (participant) => participant.userEmail,
-    );
+  public async updateParticipant(
+    updateParticipantDto: UpdateParticipantDto,
+  ): Promise<Participant> {
+    const { userEmail, meetingId } = updateParticipantDto;
+    const participantToUpdate = await this.participantsRepository.findOne({
+      meetingId,
+      userEmail,
+    });
+    if (!participantToUpdate) {
+      throw new NotFoundException('Participant not found');
+    }
     try {
-      let participantsToUpdate = await this.participantsRepository.find({
-        meetingId,
-        userEmail: In(listOfUserEmails),
+      const { userName, role, timeJoined } = updateParticipantDto;
+
+      return this.participantsRepository.save({
+        ...participantToUpdate,
+        ...(userName && { userName }),
+        ...(role && { role }),
+        ...(timeJoined && { timeJoined }),
       });
-      participantsToUpdate = participantsToUpdate.map((partcipant) => {
-        const { userEmail } = partcipant;
-        const {
-          userName: newUsername,
-          role: newRole,
-          timeJoined: newTimeJoined,
-        } = participants.find((p) => p.userEmail === userEmail);
-        return {
-          ...partcipant,
-          ...(newUsername && { userName: newUsername }),
-          ...(newRole && { role: newRole }),
-          ...(newTimeJoined && { timeJoined: newTimeJoined }),
-        };
-      });
-      await this.participantsRepository.save(participantsToUpdate);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -193,18 +186,17 @@ export class ParticipantsService {
     if (meeting.endedAt && meeting.endedAt < new Date()) {
       throw new BadRequestException('Meeting has already ended');
     }
-    const { meetingId, userEmail, userName } = participant;
+    const { id } = participant;
 
     if (host.uuid !== meeting.hostId) {
       throw new ForbiddenException('Not host of meeting');
     }
 
     const magicLinkOptions = this.jwtConfigService.magicLinkTokenOptions;
-    const payload: GenerateParticipantMagicLinkPayload = {
-      meetingId,
-      userEmail,
-      userName,
-      nonce: v4(),
+    const payload: Version1MagicPayload = {
+      ver: '1.0.0',
+      pid: id,
+      nce: v4(),
     };
 
     // no expiry -- always valid
@@ -236,15 +228,29 @@ export class ParticipantsService {
   public async findOneParticipant(
     meetingId: string,
     userEmail: string,
+    relations: string[] = [],
   ): Promise<Participant> {
     const participant = await this.participantsRepository.findOne(
       { userEmail, meetingId },
-      { relations: ['meeting'] },
+      { relations },
     );
     if (!participant) {
-      throw new NotFoundException(
-        `Participant with email ${participant.userEmail} does not exist`,
-      );
+      throw new NotFoundException(`Participant does not exist`);
+    }
+
+    return participant;
+  }
+
+  public async findOneParticipantById(
+    participantId: string,
+    relations: string[] = [],
+  ): Promise<Participant> {
+    const participant = await this.participantsRepository.findOne(
+      { id: participantId },
+      { relations },
+    );
+    if (!participant) {
+      throw new NotFoundException(`Participant does not exist`);
     }
 
     return participant;

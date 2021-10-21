@@ -1,3 +1,6 @@
+import { AuthGuard } from '@nestjs/passport';
+import { AccessUser } from './../shared/decorators/participant.decorator';
+import { AccessGuard } from './../participants/guard/access.guard';
 import {
   Controller,
   Get,
@@ -9,6 +12,7 @@ import {
   Query,
   ParseUUIDPipe,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -19,7 +23,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { UseBearerAuth } from '../shared/decorators/auth.decorator';
+import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { Usr } from '../shared/decorators/user.decorator';
 import { User } from '../users/user.entity';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
@@ -28,6 +32,7 @@ import { Meeting } from './meeting.entity';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
+import { Participant } from 'src/participants/participant.entity';
 
 @ApiTags('Meeting')
 @Controller('meeting')
@@ -52,16 +57,54 @@ export class MeetingsController {
   }
 
   @ApiOkResponse({
+    type: GetMeetingViaMagicLinkDto,
+    description: 'Meeting with meetingId and information of joiner',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid token',
+  })
+  @ApiBody({
+    description:
+      'JWT Token containing info on the userEmail, username and meetingId',
+  })
+  @UseAuth(AuthGuard('participant'))
+  @Get('/magic-link')
+  public async getMeetingViaMagicLink(
+    @AccessUser() participant: Participant,
+  ): Promise<GetMeetingViaMagicLinkDto> {
+    const meeting = await this.meetingsService.findOneById(
+      participant.meetingId,
+      true,
+    );
+    return { meeting, joiner: participant };
+  }
+
+  @ApiOkResponse({
     description: 'Successfully retrieved meeting',
     type: Meeting,
   })
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
+  @UseAuth(AccessGuard)
   @Get('/:id')
   public async getMeeting(
     @Param('id', ParseUUIDPipe) meetingId: string,
+    @AccessUser() userOrParticipant: User | Participant,
   ): Promise<Meeting> {
+    if (
+      (userOrParticipant as Participant).meetingId &&
+      (userOrParticipant as Participant).meetingId !== meetingId
+    ) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    }
+
     try {
       const meeting = await this.meetingsService.findOneById(meetingId, true);
+      if (
+        (userOrParticipant as User).uuid &&
+        (userOrParticipant as User).uuid !== meeting.hostId
+      ) {
+        throw new ForbiddenException('Not allowed to access meeting');
+      }
       return meeting;
     } catch (error) {
       throw new NotFoundException('Meeting not found');
@@ -170,24 +213,5 @@ export class MeetingsController {
     const meeting = await this.meetingsService.endMeeting(id, requesterId);
     this.meetingGateway.emitMeetingUpdated(id, meeting);
     return;
-  }
-
-  @ApiOkResponse({
-    type: GetMeetingViaMagicLinkDto,
-    description: 'Meeting with meetingId and information of joiner',
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid token',
-  })
-  @ApiParam({
-    name: 'token',
-    description:
-      'JWT Token containing info on the userEmail, username and meetingId',
-  })
-  @Get('/magic-link/:token')
-  public async getMeetingViaMagicLink(
-    @Param('token') token: string,
-  ): Promise<GetMeetingViaMagicLinkDto> {
-    return this.meetingsService.getMeetingViaMagicLink(token);
   }
 }
