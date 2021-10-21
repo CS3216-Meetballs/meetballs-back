@@ -14,5 +14,6 @@ import { MeetingsModule } from './../meetings/meetings.module';
   ],
   controllers: [AgendaItemsController],
   providers: [AgendaItemsService],
+  exports: [AgendaItemsService],
 })
 export class AgendaItemsModule {}
