@@ -1,5 +1,5 @@
-import { ApiHideProperty } from '@nestjs/swagger';
 import { IsEmail } from 'class-validator';
+import { Participant } from 'src/participants/participant.entity';
 import {
   Column,
   Entity,
@@ -17,7 +17,6 @@ export class Suggestion {
   @Column({ type: 'varchar' })
   meetingId: string;
 
-  @ApiHideProperty()
   @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id, {
     onDelete: 'CASCADE',
   })
@@ -37,9 +36,17 @@ export class Suggestion {
   @Column({ type: 'varchar' })
   name: string;
 
-  @Column({ type: 'varchar' })
-  description: boolean;
+  @Column({ type: 'varchar', nullable: true })
+  description: string;
 
   @Column({ type: 'integer' })
   expectedDuration: number;
+
+  @Column({ type: 'varchar' })
+  participantId?: string;
+
+  @ManyToOne(() => Participant, {
+    cascade: true,
+  })
+  participant?: Participant;
 }

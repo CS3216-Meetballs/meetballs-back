@@ -17,7 +17,6 @@ export class CreateSuggestionDto {
   userEmail: string;
 
   @IsString()
-  @IsOptional()
   userName: string;
 
   @IsString()
