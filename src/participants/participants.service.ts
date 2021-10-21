@@ -14,7 +14,6 @@ import { AppConfigService } from 'src/config/app.config';
 import { JwtConfigService } from 'src/config/jwt.config';
 import { MailService } from 'src/mail/mail.service';
 import { Meeting } from 'src/meetings/meeting.entity';
-import { GenerateParticipantMagicLinkPayload } from 'src/shared/interface/generate-participant-magic-link.interface';
 import { In, Repository } from 'typeorm';
 import {
   CreateParticipantDto,
@@ -26,6 +25,7 @@ import { UpdateParticipantsDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { User } from 'src/users/user.entity';
 import { isNil } from 'lodash';
+import { Version1MagicPayload } from './../shared/interface/generate-participant-magic-link.interface';
 
 @Injectable()
 export class ParticipantsService {
@@ -193,17 +193,17 @@ export class ParticipantsService {
     if (meeting.endedAt && meeting.endedAt < new Date()) {
       throw new BadRequestException('Meeting has already ended');
     }
-    const { meetingId, userEmail } = participant;
+    const { id } = participant;
 
     if (host.uuid !== meeting.hostId) {
       throw new ForbiddenException('Not host of meeting');
     }
 
     const magicLinkOptions = this.jwtConfigService.magicLinkTokenOptions;
-    const payload: GenerateParticipantMagicLinkPayload = {
-      meetingId,
-      userEmail,
-      nonce: v4(),
+    const payload: Version1MagicPayload = {
+      ver: '1.0.0',
+      pid: id,
+      nce: v4(),
     };
 
     // no expiry -- always valid
@@ -242,9 +242,22 @@ export class ParticipantsService {
       { relations },
     );
     if (!participant) {
-      throw new NotFoundException(
-        `Participant with email ${participant.userEmail} does not exist`,
-      );
+      throw new NotFoundException(`Participant does not exist`);
+    }
+
+    return participant;
+  }
+
+  public async findOneParticipantById(
+    participantId: string,
+    relations: string[] = [],
+  ): Promise<Participant> {
+    const participant = await this.participantsRepository.findOne(
+      { id: participantId },
+      { relations },
+    );
+    if (!participant) {
+      throw new NotFoundException(`Participant does not exist`);
     }
 
     return participant;
