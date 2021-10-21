@@ -1,6 +1,6 @@
-import { catchError, map, Observable } from 'rxjs';
+import { catchError, firstValueFrom, map, Observable } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
 
@@ -15,6 +15,7 @@ import { Participant } from '../participants/participant.entity';
 import { ZoomConfigService } from './../config/zoom.config';
 import { Meeting } from '../meetings/meeting.entity';
 import { User } from '../users/user.entity';
+import { ZoomSyncMeetingDto } from './dtos/zoom-sync-meeting-dto';
 
 @Injectable()
 export class ZoomService {
@@ -61,6 +62,46 @@ export class ZoomService {
           throw new HttpException(e.response.data, e.response.status);
         }),
       );
+  }
+
+  async syncMeeting(
+    zoomSyncMeetingDto: ZoomSyncMeetingDto,
+    zoomToken: string,
+  ): Promise<Meeting> {
+    const { meetingId, zoomUuid, id } = zoomSyncMeetingDto;
+    const meeting = await this.meetingRepository.findOne({
+      id,
+      meetingId,
+      zoomUuid,
+    });
+    if (!meeting) {
+      throw new NotFoundException('MeetBalls meeting not found');
+    }
+    let newZoomUuid = zoomUuid;
+    try {
+      const zoomMeeting = await firstValueFrom(
+        this.getMeeting(+meetingId, zoomToken),
+      );
+      newZoomUuid = zoomMeeting.uuid;
+      console.log(zoomMeeting.join_url === meeting.joinUrl);
+    } catch (err) {
+      const httpStatus = (err as HttpException).getStatus();
+      if (httpStatus === 404) {
+        newZoomUuid = null;
+      } else {
+        // rethrow
+        throw err;
+      }
+    }
+    if (newZoomUuid === zoomUuid) {
+      return meeting;
+    }
+    const newMeeting = this.meetingRepository.create({
+      ...meeting,
+      zoomUuid: newZoomUuid,
+    });
+    await this.meetingRepository.save(newMeeting);
+    return newMeeting;
   }
 
   async deauthorizeUser(payload: ZoomDeauthorizePayload) {
