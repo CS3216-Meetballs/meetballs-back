@@ -1,6 +1,5 @@
 import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 import { AgendaItem } from './../agenda-items/agenda-item.entity';
-import * as bcrypt from 'bcrypt';
 import {
   BadRequestException,
   ConflictException,
@@ -15,11 +14,8 @@ import { Meeting } from './meeting.entity';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { ZoomMeetingStatus } from '../shared/enum/zoom-meeting-status.enum';
 import { isArray } from 'lodash';
-import { GenerateParticipantMagicLinkPayload } from 'src/shared/interface/generate-participant-magic-link.interface';
 import { JwtService } from '@nestjs/jwt';
 import { JwtConfigService } from 'src/config/jwt.config';
-import { Participant } from 'src/participants/participant.entity';
-import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
 import { User } from 'src/users/user.entity';
 import { randomBytes, createCipheriv, scryptSync } from 'crypto';
 
