@@ -40,10 +40,6 @@ export class SuggestionsService {
   ): Promise<Suggestion> {
     const { meetingId, description, expectedDuration, name } =
       createSuggestionDto;
-    // const participant = await this.participantsService.findOneParticipant(
-    //   meetingId,
-    //   userEmail,
-    // );
     const suggestionToBeCreated = this.suggestionsRepository.create({
       meetingId,
       name,
