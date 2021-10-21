@@ -1,3 +1,4 @@
+import { ApiHideProperty } from '@nestjs/swagger';
 import { Participant } from 'src/participants/participant.entity';
 import {
   Column,
@@ -16,6 +17,7 @@ export class Suggestion {
   @Column({ type: 'varchar' })
   meetingId: string;
 
+  @ApiHideProperty()
   @ManyToOne(() => Meeting, (meeting: Meeting) => meeting.id, {
     onDelete: 'CASCADE',
   })
@@ -37,6 +39,7 @@ export class Suggestion {
   @Column({ type: 'varchar' })
   participantId?: string;
 
+  @ApiHideProperty()
   @ManyToOne(() => Participant, {
     cascade: true,
     onDelete: 'SET NULL',
