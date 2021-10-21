@@ -1,4 +1,3 @@
-import { IsEmail } from 'class-validator';
 import { Participant } from 'src/participants/participant.entity';
 import {
   Column,
@@ -23,13 +22,6 @@ export class Suggestion {
   @JoinColumn({ name: 'meeting_id', referencedColumnName: 'id' })
   meeting: Meeting;
 
-  @Column({ type: 'varchar' })
-  @IsEmail()
-  userEmail: string; // to track who gave the suggestion
-
-  @Column({ type: 'varchar', nullable: true })
-  userName?: string;
-
   @Column({ type: 'boolean', default: false })
   accepted: boolean;
 
@@ -47,6 +39,7 @@ export class Suggestion {
 
   @ManyToOne(() => Participant, {
     cascade: true,
+    onDelete: 'SET NULL',
   })
   participant?: Participant;
 }

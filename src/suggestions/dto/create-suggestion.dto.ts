@@ -12,12 +12,9 @@ export class CreateSuggestionDto {
   @IsUUID()
   meetingId: string;
 
-  @IsEmail()
-  @IsDefined()
-  userEmail: string;
-
-  @IsString()
-  userName: string;
+  // @IsEmail()
+  // @IsDefined()
+  // userEmail: string;
 
   @IsString()
   @IsDefined()
