@@ -27,7 +27,7 @@ import {
   CreateParticipantDto,
 } from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
-import { UpdateParticipantsDto } from './dto/update-participants.dto';
+import { UpdateParticipantDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { ParticipantsService } from './participants.service';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
@@ -49,6 +49,9 @@ export class ParticipantsController {
     private readonly meetingsService: MeetingsService,
   ) {}
 
+  /**
+   * @deprecated
+   */
   @ApiCreatedResponse({
     description: 'Successfully created participant',
     type: [Participant],
@@ -71,10 +74,6 @@ export class ParticipantsController {
 
     const createdParticipants =
       await this.participantsService.createParticipants(createParticipantsDto);
-    this.meetingGateway.emitParticipantsUpdated(
-      createdParticipants[0].meetingId,
-      createdParticipants,
-    );
     return createdParticipants;
   }
 
@@ -112,22 +111,30 @@ export class ParticipantsController {
   @ApiBadRequestResponse({
     description: 'Invalid positions in request body',
   })
-  @ApiBody({ type: UpdateParticipantsDto })
+  @ApiBody({ type: UpdateParticipantDto })
   @UseBearerAuth()
   @Put('/')
-  public async updateParticipants(
+  public async updateParticipant(
     @Usr() requester: User,
-    @Body() updateParticipantsDto: UpdateParticipantsDto,
-  ): Promise<void> {
+    @Body() updateParticipantDto: UpdateParticipantDto,
+  ): Promise<Participant> {
     if (
       !(await this.meetingsService.isHostOfMeeting(
         requester.uuid,
-        updateParticipantsDto.meetingId,
+        updateParticipantDto.meetingId,
       ))
     ) {
       throw new ForbiddenException('Not allowed to update');
     }
-    return this.participantsService.updateParticipants(updateParticipantsDto);
+    return this.participantsService
+      .updateParticipant(updateParticipantDto)
+      .then((participant) => {
+        this.meetingGateway.emitParticipantsUpdated(
+          updateParticipantDto.meetingId,
+          participant,
+        );
+        return participant;
+      });
   }
 
   @ApiOkResponse({

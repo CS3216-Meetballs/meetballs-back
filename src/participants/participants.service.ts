@@ -21,7 +21,7 @@ import {
 } from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
 import { ParticipantEmailDto } from './dto/participant-email.dto';
-import { UpdateParticipantsDto } from './dto/update-participants.dto';
+import { UpdateParticipantDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { User } from 'src/users/user.entity';
 import { isNil } from 'lodash';
@@ -94,33 +94,26 @@ export class ParticipantsService {
     }
   }
 
-  public async updateParticipants(
-    updateParticipantsDto: UpdateParticipantsDto,
-  ): Promise<void> {
-    const { participants, meetingId } = updateParticipantsDto;
-    const listOfUserEmails = [...participants].map(
-      (participant) => participant.userEmail,
-    );
+  public async updateParticipant(
+    updateParticipantDto: UpdateParticipantDto,
+  ): Promise<Participant> {
+    const { userEmail, meetingId } = updateParticipantDto;
+    const participantToUpdate = await this.participantsRepository.findOne({
+      meetingId,
+      userEmail,
+    });
+    if (!participantToUpdate) {
+      throw new NotFoundException('Participant not found');
+    }
     try {
-      let participantsToUpdate = await this.participantsRepository.find({
-        meetingId,
-        userEmail: In(listOfUserEmails),
+      const { userName, role, timeJoined } = updateParticipantDto;
+
+      return this.participantsRepository.save({
+        ...participantToUpdate,
+        ...(userName && { userName }),
+        ...(role && { role }),
+        ...(timeJoined && { timeJoined }),
       });
-      participantsToUpdate = participantsToUpdate.map((partcipant) => {
-        const { userEmail } = partcipant;
-        const {
-          userName: newUsername,
-          role: newRole,
-          timeJoined: newTimeJoined,
-        } = participants.find((p) => p.userEmail === userEmail);
-        return {
-          ...partcipant,
-          ...(newUsername && { userName: newUsername }),
-          ...(newRole && { role: newRole }),
-          ...(newTimeJoined && { timeJoined: newTimeJoined }),
-        };
-      });
-      await this.participantsRepository.save(participantsToUpdate);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
