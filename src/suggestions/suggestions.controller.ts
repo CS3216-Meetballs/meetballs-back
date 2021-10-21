@@ -15,13 +15,16 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { UseBearerAuth } from 'src/shared/decorators/auth.decorator';
+import { UseAuth, UseBearerAuth } from 'src/shared/decorators/auth.decorator';
 import { Usr } from 'src/shared/decorators/user.decorator';
 import { User } from '../users/user.entity';
 import { CreateSuggestionDto } from './dto/create-suggestion.dto';
 import { UpdateSuggestionDto } from './dto/update-suggestion.dto';
 import { SuggestionsService } from './suggestions.service';
 import { Suggestion } from './suggestion.entity';
+import { AuthGuard } from '@nestjs/passport';
+import { AccessUser } from 'src/shared/decorators/participant.decorator';
+import { Participant } from 'src/participants/participant.entity';
 
 @ApiTags('Suggestion')
 @Controller('suggestion')
@@ -44,7 +47,6 @@ export class SuggestionsController {
     return this.suggestionsService.getSuggestions(meetingId);
   }
 
-  // TODO: Update this to use the participant guard
   @ApiOkResponse({
     description:
       'Successfully get suggestions for meeting suggested by participant',
@@ -54,23 +56,25 @@ export class SuggestionsController {
     name: 'meetingId',
     description: 'The id of the meeting',
   })
-  @ApiParam({
-    name: 'participantId',
-    description: 'The id of the participant',
-  })
-  @Get('/:meetingId/:participantId')
+  @UseAuth(AuthGuard('participant'))
+  @Get('/participant/:meetingId')
   public async getSuggestionsForParticipant(
+    @AccessUser() participant: Participant,
     @Param('meetingId', ParseUUIDPipe) meetingId: string,
-    @Param('participantId', ParseUUIDPipe) participantId: string,
   ): Promise<Suggestion[]> {
-    return this.suggestionsService.getSuggestions(meetingId, participantId);
+    return this.suggestionsService.getSuggestions(meetingId, participant);
   }
 
+  @UseAuth(AuthGuard('participant'))
   @Post('/')
   public async createSuggestion(
+    @AccessUser() participant: Participant,
     @Body() createSuggestionDto: CreateSuggestionDto,
   ): Promise<Suggestion> {
-    return this.suggestionsService.createSuggestion(createSuggestionDto);
+    return this.suggestionsService.createSuggestion(
+      createSuggestionDto,
+      participant,
+    );
   }
 
   @ApiOkResponse({
@@ -81,6 +85,7 @@ export class SuggestionsController {
     name: 'suggestionId',
     description: 'The id of the suggestion',
   })
+  @UseAuth(AuthGuard('participant'))
   @ApiBody({ type: UpdateSuggestionDto })
   @Put('/:suggestionId')
   public async updateSuggestion(
@@ -120,6 +125,7 @@ export class SuggestionsController {
     name: 'suggestionId',
     description: 'The id of the suggestion',
   })
+  @UseAuth(AuthGuard('participant'))
   @Delete('/:suggestionId')
   public async deleteSuggestion(
     @Param('suggestionId', ParseUUIDPipe) suggestionId: string,

@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { AgendaItemsService } from 'src/agenda-items/agenda-items.service';
 import { MeetingsService } from 'src/meetings/meetings.service';
+import { Participant } from 'src/participants/participant.entity';
 import { ParticipantsService } from 'src/participants/participants.service';
 
 import { Repository } from 'typeorm';
@@ -25,25 +26,29 @@ export class SuggestionsService {
 
   public async getSuggestions(
     meetingId: string,
-    participantId?: string,
+    participant?: Participant,
   ): Promise<Suggestion[]> {
     return this.suggestionsRepository.find({
       meetingId,
-      ...(participantId && { participantId }),
+      ...(participant && { participantId: participant.id }),
     });
   }
 
   public async createSuggestion(
     createSuggestionDto: CreateSuggestionDto,
+    participant: Participant,
   ): Promise<Suggestion> {
-    const { meetingId, userEmail } = createSuggestionDto;
-    const participant = await this.participantsService.findOneParticipant(
-      meetingId,
-      userEmail,
-    );
-    console.log('participant', participant);
+    const { meetingId, description, expectedDuration, name } =
+      createSuggestionDto;
+    // const participant = await this.participantsService.findOneParticipant(
+    //   meetingId,
+    //   userEmail,
+    // );
     const suggestionToBeCreated = this.suggestionsRepository.create({
-      ...createSuggestionDto,
+      meetingId,
+      name,
+      description,
+      expectedDuration,
       participantId: participant.id,
     });
     const createdSuggestion = await this.suggestionsRepository.save(
