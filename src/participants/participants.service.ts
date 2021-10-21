@@ -193,7 +193,7 @@ export class ParticipantsService {
     if (meeting.endedAt && meeting.endedAt < new Date()) {
       throw new BadRequestException('Meeting has already ended');
     }
-    const { meetingId, userEmail, userName } = participant;
+    const { meetingId, userEmail } = participant;
 
     if (host.uuid !== meeting.hostId) {
       throw new ForbiddenException('Not host of meeting');
@@ -203,7 +203,6 @@ export class ParticipantsService {
     const payload: GenerateParticipantMagicLinkPayload = {
       meetingId,
       userEmail,
-      userName,
       nonce: v4(),
     };
 
