@@ -290,7 +290,7 @@ export class MeetingsService {
         { secret: this.jwtConfigService.magicLinkTokenOptions.secret },
       );
     } catch (error) {
-      throw new BadRequestException('Invalid token');
+      throw new ForbiddenException('Cannot access meeting');
     }
     const { meetingId, userEmail } = payload;
     const meeting = await this.findOneById(meetingId, true);
@@ -319,5 +319,12 @@ export class MeetingsService {
       meeting,
       joiner,
     };
+  }
+
+  public async isHostOfMeeting(
+    hostId: string,
+    meetingId: string,
+  ): Promise<boolean> {
+    return !!(await this.meetingRepository.findOne({ hostId, meetingId }));
   }
 }

@@ -1,3 +1,5 @@
+import { AccessUser } from './../shared/decorators/participant.decorator';
+import { AccessGuard } from './../participants/guard/access.guard';
 import {
   Controller,
   Get,
@@ -9,6 +11,7 @@ import {
   Query,
   ParseUUIDPipe,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -19,7 +22,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { UseBearerAuth } from '../shared/decorators/auth.decorator';
+import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { Usr } from '../shared/decorators/user.decorator';
 import { User } from '../users/user.entity';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
@@ -28,6 +31,7 @@ import { Meeting } from './meeting.entity';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
+import { Participant } from 'src/participants/participant.entity';
 
 @ApiTags('Meeting')
 @Controller('meeting')
@@ -56,12 +60,27 @@ export class MeetingsController {
     type: Meeting,
   })
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
+  @UseAuth(AccessGuard)
   @Get('/:id')
   public async getMeeting(
     @Param('id', ParseUUIDPipe) meetingId: string,
+    @AccessUser() userOrParticipant: User | Participant,
   ): Promise<Meeting> {
+    if (
+      (userOrParticipant as Participant).meetingId &&
+      (userOrParticipant as Participant).meetingId !== meetingId
+    ) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    }
+
     try {
       const meeting = await this.meetingsService.findOneById(meetingId, true);
+      if (
+        (userOrParticipant as User).uuid &&
+        (userOrParticipant as User).uuid !== meeting.hostId
+      ) {
+        throw new ForbiddenException('Not allowed to access meeting');
+      }
       return meeting;
     } catch (error) {
       throw new NotFoundException('Meeting not found');

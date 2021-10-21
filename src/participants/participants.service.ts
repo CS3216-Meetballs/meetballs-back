@@ -236,10 +236,11 @@ export class ParticipantsService {
   public async findOneParticipant(
     meetingId: string,
     userEmail: string,
+    relations: string[] = [],
   ): Promise<Participant> {
     const participant = await this.participantsRepository.findOne(
       { userEmail, meetingId },
-      { relations: ['meeting'] },
+      { relations },
     );
     if (!participant) {
       throw new NotFoundException(
