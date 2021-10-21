@@ -22,6 +22,8 @@ import { ParticipantStrategy } from './strategies/participant.strategy';
     MeetingsModule,
   ],
   controllers: [ParticipantsController],
+  providers: [ParticipantsService],
+  exports: [ParticipantsService],
   providers: [ParticipantsService, ParticipantStrategy],
 })
 export class ParticipantsModule {}

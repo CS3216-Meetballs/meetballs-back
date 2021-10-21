@@ -13,6 +13,7 @@ import {
 import { Meeting } from '../meetings/meeting.entity';
 import { ParticipantRole } from '../shared/enum/participant-role.enum';
 import { AgendaItem } from '../agenda-items/agenda-item.entity';
+import { Suggestion } from 'src/suggestions/suggestion.entity';
 
 @Entity({ name: 'participants' })
 @Index(['userEmail', 'meetingId'], { unique: true })
@@ -65,4 +66,10 @@ export class Participant {
   })
   @Exclude()
   hashedMagicLinkToken: string;
+
+  @OneToMany(
+    () => Suggestion,
+    (suggestion: Suggestion) => suggestion.participant,
+  )
+  suggestions: Suggestion[];
 }

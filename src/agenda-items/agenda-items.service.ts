@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNil } from 'lodash';
+import { Suggestion } from 'src/suggestions/suggestion.entity';
 import { In, MoreThan, Repository } from 'typeorm';
 import { AgendaItem } from './agenda-item.entity';
 import { CreateAgendaItemDto } from './dto/create-agenda-item.dto';
@@ -162,5 +163,25 @@ export class AgendaItemsService {
       };
     });
     await this.agendaItemRepository.save(agendaItemsToReorder);
+  }
+
+  public async createOneAgendaItemFromSuggestion(suggestion: Suggestion) {
+    const { meetingId, name, description, expectedDuration } = suggestion;
+    const totalAgendaItemsInMeeting = (
+      await this.agendaItemRepository.find({
+        meetingId,
+      })
+    ).length;
+    const agendaItemToBeCreated = this.agendaItemRepository.create({
+      meetingId,
+      position: totalAgendaItemsInMeeting,
+      name,
+      description,
+      expectedDuration,
+    });
+    const createdAgendaItem = await this.agendaItemRepository.save(
+      agendaItemToBeCreated,
+    );
+    return createdAgendaItem;
   }
 }

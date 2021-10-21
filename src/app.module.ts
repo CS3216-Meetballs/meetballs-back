@@ -18,6 +18,7 @@ import { FeedbacksModule } from './feedback/feedbacks.module';
 import { AwsSdkModule } from 'nest-aws-sdk';
 import { S3 } from 'aws-sdk';
 import { S3ConfigService } from './config/s3.config';
+import { SuggestionsModule } from './suggestions/suggestions.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { S3ConfigService } from './config/s3.config';
       services: [S3],
     }),
     UploadsModule,
+    SuggestionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
