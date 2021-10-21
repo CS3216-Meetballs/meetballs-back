@@ -8,7 +8,12 @@ import {
   ParseIntPipe,
   Post,
 } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  ApiExcludeEndpoint,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { ZoomService } from './zoom.service';
 
@@ -22,6 +27,7 @@ import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { AuthBearerToken } from '../shared/decorators/auth-header.decorator';
 import { ZoomSubscriptionGuard } from './guard/zoom-subscription.guard';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
+import { ZoomSyncMeetingDto } from './dtos/zoom-sync-meeting-dto';
 
 @ApiTags('Zoom Meetings')
 @Controller('zoom')
@@ -59,6 +65,31 @@ export class ZoomController {
     @Param('meetingId', ParseIntPipe) meetingId: number,
   ): Observable<ZoomMeetingDto> {
     return this.zoomService.getMeeting(meetingId, token);
+  }
+
+  /**
+   * Checks meeting uuid to see if it is updated
+   *
+   * Returns the current valid meeting uuid, null otherwise
+   */
+  @ApiResponse({ description: 'The synced meeting' })
+  @UseBearerAuth()
+  @Post('meetings/sync')
+  public async syncMeetingWithZoom(
+    @AuthBearerToken() token: string,
+    @Body() zoomSyncMeetingDto: ZoomSyncMeetingDto,
+  ): Promise<string | null> {
+    const meeting = await this.zoomService.syncMeeting(
+      zoomSyncMeetingDto,
+      token,
+    );
+
+    if (meeting.zoomUuid !== zoomSyncMeetingDto.zoomUuid) {
+      this.meetingGateway.emitMeetingUpdated(meeting.id, meeting);
+      return meeting.zoomUuid;
+    }
+
+    return zoomSyncMeetingDto.zoomUuid;
   }
 
   /**
