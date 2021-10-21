@@ -85,7 +85,6 @@ export class ZoomController {
     );
 
     if (meeting.zoomUuid !== zoomSyncMeetingDto.zoomUuid) {
-      this.meetingGateway.emitMeetingUpdated(meeting.id, meeting);
       return meeting.zoomUuid;
     }
 
