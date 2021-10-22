@@ -1,5 +1,6 @@
 import { ApiHideProperty } from '@nestjs/swagger';
 import { IsDefined, IsPositive, IsUrl } from 'class-validator';
+import { Suggestion } from 'src/suggestions/suggestion.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -87,4 +88,9 @@ export class Meeting {
     cascade: true,
   })
   participants: Participant[];
+
+  @OneToMany(() => Suggestion, (suggestion) => suggestion.meeting, {
+    cascade: true,
+  })
+  suggestions: Suggestion[];
 }

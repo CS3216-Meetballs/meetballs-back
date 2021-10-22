@@ -1,7 +1,11 @@
+import { MeetingsService } from './../meetings/meetings.service';
+import { AccessUser } from '../shared/decorators/participant.decorator';
+import { AccessGuard } from './guard/access.guard';
 import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -17,13 +21,13 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UseBearerAuth } from '../shared/decorators/auth.decorator';
+import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
 import {
   CreateParticipantsDto,
   CreateParticipantDto,
 } from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
-import { UpdateParticipantsDto } from './dto/update-participants.dto';
+import { UpdateParticipantDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { ParticipantsService } from './participants.service';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
@@ -42,8 +46,12 @@ export class ParticipantsController {
   constructor(
     private readonly participantsService: ParticipantsService,
     private readonly meetingGateway: MeetingSocketGateway,
+    private readonly meetingsService: MeetingsService,
   ) {}
 
+  /**
+   * @deprecated
+   */
   @ApiCreatedResponse({
     description: 'Successfully created participant',
     type: [Participant],
@@ -52,14 +60,20 @@ export class ParticipantsController {
   @UseBearerAuth()
   @Post('/create-many')
   public async createParticipants(
+    @Usr() user: User,
     @Body() createParticipantsDto: CreateParticipantsDto,
   ): Promise<Participant[]> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(
+        user.uuid,
+        createParticipantsDto.participants[0].meetingId,
+      ))
+    ) {
+      throw new ForbiddenException('Not allowed to create');
+    }
+
     const createdParticipants =
       await this.participantsService.createParticipants(createParticipantsDto);
-    this.meetingGateway.emitParticipantsUpdated(
-      createdParticipants[0].meetingId,
-      createdParticipants,
-    );
     return createdParticipants;
   }
 
@@ -77,6 +91,14 @@ export class ParticipantsController {
     @Usr() requester: User,
     @Body() deleteParticipantsDto: DeleteParticipantsDto,
   ): Promise<void> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(
+        requester.uuid,
+        deleteParticipantsDto.meetingId,
+      ))
+    ) {
+      throw new ForbiddenException('Not allowed to delete');
+    }
     return this.participantsService.deleteParticipants(
       deleteParticipantsDto,
       requester,
@@ -89,13 +111,30 @@ export class ParticipantsController {
   @ApiBadRequestResponse({
     description: 'Invalid positions in request body',
   })
-  @ApiBody({ type: UpdateParticipantsDto })
+  @ApiBody({ type: UpdateParticipantDto })
   @UseBearerAuth()
   @Put('/')
-  public async updateParticipants(
-    @Body() updateParticipantsDto: UpdateParticipantsDto,
-  ): Promise<void> {
-    return this.participantsService.updateParticipants(updateParticipantsDto);
+  public async updateParticipant(
+    @Usr() requester: User,
+    @Body() updateParticipantDto: UpdateParticipantDto,
+  ): Promise<Participant> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(
+        requester.uuid,
+        updateParticipantDto.meetingId,
+      ))
+    ) {
+      throw new ForbiddenException('Not allowed to update');
+    }
+    return this.participantsService
+      .updateParticipant(updateParticipantDto)
+      .then((participant) => {
+        this.meetingGateway.emitParticipantsUpdated(
+          updateParticipantDto.meetingId,
+          participant,
+        );
+        return participant;
+      });
   }
 
   @ApiOkResponse({
@@ -103,10 +142,27 @@ export class ParticipantsController {
     type: [Participant],
   })
   @ApiParam({ name: 'meetingUuid', description: 'Id of meeting' })
+  @UseAuth(AccessGuard)
   @Get('/:meetingUuid')
   public async getParticipants(
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
   ): Promise<Participant[]> {
+    if (
+      userOrParticipant['meetingId'] &&
+      (userOrParticipant as Participant).meetingId !== meetingId
+    ) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        meetingId,
+      ))
+    ) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    }
+
     return this.participantsService.getParticipantsByMeetingId(meetingId);
   }
 
@@ -118,8 +174,17 @@ export class ParticipantsController {
   @ApiBody({ type: CreateParticipantDto })
   @Post('/')
   public async createOneParticipant(
+    @Usr() requester: User,
     @Body() createParticipantDto: CreateParticipantDto,
   ): Promise<Participant> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(
+        requester.uuid,
+        createParticipantDto.meetingId,
+      ))
+    ) {
+      throw new ForbiddenException('Not allowed to create');
+    }
     return this.participantsService
       .createOneParticipant(createParticipantDto)
       .then((participant) => {
@@ -138,9 +203,15 @@ export class ParticipantsController {
   @ApiBody({ type: ParticipantEmailDto })
   @Put('/:meetingUuid/present')
   public async markPresent(
+    @Usr() requester: User,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Body() participantEmail: ParticipantEmailDto,
   ): Promise<void> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
+    ) {
+      throw new ForbiddenException('Not allowed to update');
+    }
     return this.participantsService
       .markPresent(meetingId, participantEmail)
       .then((participant) => {
@@ -156,9 +227,15 @@ export class ParticipantsController {
   @ApiBody({ type: ParticipantEmailDto })
   @Put('/:meetingUuid/absent')
   public async markAbsent(
+    @Usr() requester: User,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Body() participantEmail: ParticipantEmailDto,
   ): Promise<void> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
+    ) {
+      throw new ForbiddenException('Not allowed to update');
+    }
     return this.participantsService
       .markAbsent(meetingId, participantEmail)
       .then((participant) => {
@@ -174,9 +251,15 @@ export class ParticipantsController {
   @ApiBody({ type: ParticipantEmailDto })
   @Put('/:meetingUuid/duplicate')
   public async markDuplicate(
+    @Usr() requester: User,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Body() participantEmail: ParticipantEmailDto,
   ): Promise<void> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
+    ) {
+      throw new ForbiddenException('Not allowed to update');
+    }
     return this.participantsService
       .markDuplicate(meetingId, participantEmail)
       .then((participant) => {
@@ -202,10 +285,19 @@ export class ParticipantsController {
     @Usr() host: User,
     @Body() createParticipantMagicLinkDto: CreateParticipantMagicLinkDto,
   ): Promise<StatusResponseDto> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(
+        host.uuid,
+        createParticipantMagicLinkDto.meetingId,
+      ))
+    ) {
+      throw new ForbiddenException('Not allowed to send invite');
+    }
     const { userEmail, meetingId } = createParticipantMagicLinkDto;
     const participant = await this.participantsService.findOneParticipant(
       meetingId,
       userEmail,
+      ['meeting'],
     );
 
     await this.participantsService.sendOneInvite(
@@ -231,12 +323,21 @@ export class ParticipantsController {
     @Usr() host: User,
     @Body() createParticipantsMagicLinkDto: CreateParticipantsMagicLinkDto,
   ): Promise<StatusResponseDto> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(
+        host.uuid,
+        createParticipantsMagicLinkDto.participants[0].meetingId,
+      ))
+    ) {
+      throw new ForbiddenException('Not allowed to send invites');
+    }
     const promises = createParticipantsMagicLinkDto.participants.map(
       async (details) => {
         const { userEmail, meetingId } = details;
         const participant = await this.participantsService.findOneParticipant(
           meetingId,
           userEmail,
+          ['meeting'],
         );
 
         await this.participantsService.sendOneInvite(

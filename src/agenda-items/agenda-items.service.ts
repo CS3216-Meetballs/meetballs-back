@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNil } from 'lodash';
+import { Suggestion } from 'src/suggestions/suggestion.entity';
 import { In, MoreThan, Repository } from 'typeorm';
 import { AgendaItem } from './agenda-item.entity';
 import { CreateAgendaItemDto } from './dto/create-agenda-item.dto';
@@ -89,24 +90,27 @@ export class AgendaItemsService {
       .execute();
   }
 
-  public async updateAgendaItemByMeetingIdAndPosition(
+  public async getAgendaItemByMeetingIdAndPosition(
     meetingId: string,
     position: number,
+  ): Promise<AgendaItem> {
+    return this.agendaItemRepository.findOne(
+      {
+        meetingId,
+        position,
+      },
+      { relations: ['meeting'] },
+    );
+  }
+  public async updateAgendaItemByMeetingIdAndPosition(
+    targetAgenda: AgendaItem,
     updateAgendaItemDto: UpdateAgendaItemDto,
   ): Promise<void> {
-    const agendaItemToUpdate = await this.agendaItemRepository.findOne({
-      meetingId,
-      position,
-    });
-    if (!agendaItemToUpdate) {
-      throw new NotFoundException(
-        `Agenda Item with meetingId ${meetingId} and position ${position} not found`,
-      );
-    }
     try {
       const { speakerId, ...updateDetails } = updateAgendaItemDto;
+      delete targetAgenda.meeting;
       const newAgenda = this.agendaItemRepository.create({
-        ...agendaItemToUpdate,
+        ...targetAgenda,
         ...updateDetails,
         speaker: speakerId ? { id: speakerId } : null,
       });
@@ -159,5 +163,25 @@ export class AgendaItemsService {
       };
     });
     await this.agendaItemRepository.save(agendaItemsToReorder);
+  }
+
+  public async createOneAgendaItemFromSuggestion(suggestion: Suggestion) {
+    const { meetingId, name, description, expectedDuration } = suggestion;
+    const totalAgendaItemsInMeeting = (
+      await this.agendaItemRepository.find({
+        meetingId,
+      })
+    ).length;
+    const agendaItemToBeCreated = this.agendaItemRepository.create({
+      meetingId,
+      position: totalAgendaItemsInMeeting,
+      name,
+      description,
+      expectedDuration,
+    });
+    const createdAgendaItem = await this.agendaItemRepository.save(
+      agendaItemToBeCreated,
+    );
+    return createdAgendaItem;
   }
 }

@@ -14,7 +14,11 @@ import {
 } from 'class-validator';
 import { ParticipantRole } from '../../shared/enum/participant-role.enum';
 
-export class UpdateParticipant {
+export class UpdateParticipantDto {
+  @IsUUID()
+  @IsDefined()
+  meetingId: string;
+
   @IsEmail()
   @IsDefined()
   userEmail: string;
@@ -41,18 +45,14 @@ export class UpdateParticipant {
 }
 
 export class UpdateParticipantsDto {
-  @IsUUID()
-  @IsDefined()
-  meetingId: string;
-
   @IsArray()
-  @Type(() => UpdateParticipant)
+  @Type(() => UpdateParticipantDto)
   @ValidateNested({ each: true })
   @IsDefined()
   @ArrayMinSize(1) // If items are reordered, at least 2 items need to be swapped
   @ApiProperty({
     description: 'List participants to be updated',
-    type: [UpdateParticipant],
+    type: [UpdateParticipantDto],
   })
-  participants: UpdateParticipant[];
+  participants: UpdateParticipantDto[];
 }
