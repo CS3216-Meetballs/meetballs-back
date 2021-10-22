@@ -86,7 +86,9 @@ export class SuggestionsService {
     const suggestion = await this.suggestionsRepository.save(
       suggestionToBeAccepted,
     );
-    await this.agendaItemsService.createOneAgendaItemFromSuggestion(suggestion);
+    return this.agendaItemsService.createOneAgendaItemFromSuggestion(
+      suggestion,
+    );
   }
 
   public async deleteSuggestion(

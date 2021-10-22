@@ -29,6 +29,7 @@ import { AccessUser } from 'src/shared/decorators/participant.decorator';
 import { Participant } from 'src/participants/participant.entity';
 import { MeetingsService } from 'src/meetings/meetings.service';
 import { AccessGuard } from 'src/participants/guard/access.guard';
+import { AgendaItem } from './../agenda-items/agenda-item.entity';
 
 @ApiTags('Suggestion')
 @Controller('suggestion')
@@ -148,6 +149,7 @@ export class SuggestionsController {
 
   @ApiCreatedResponse({
     description: 'Successfully accepted suggestion and created an agenda item',
+    type: AgendaItem,
   })
   @ApiParam({
     name: 'suggestionId',
@@ -158,7 +160,7 @@ export class SuggestionsController {
   public async markSuggestionAsAccepted(
     @Param('suggestionId', ParseUUIDPipe) suggestionId: string,
     @Usr() requester: User,
-  ): Promise<void> {
+  ): Promise<AgendaItem> {
     return this.suggestionsService.markSuggestionAsAccepted(
       suggestionId,
       requester.uuid,
