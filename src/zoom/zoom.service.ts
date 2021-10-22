@@ -96,6 +96,12 @@ export class ZoomService {
     if (newZoomUuid === zoomUuid) {
       return meeting;
     }
+
+    if (!!(await this.meetingRepository.findOne({ zoomUuid: newZoomUuid }))) {
+      // synced meeting already exists
+      return meeting;
+    }
+
     const newMeeting = this.meetingRepository.create({
       ...meeting,
       zoomUuid: newZoomUuid,
