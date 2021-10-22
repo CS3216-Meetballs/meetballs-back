@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -25,11 +27,16 @@ import { Suggestion } from './suggestion.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { AccessUser } from 'src/shared/decorators/participant.decorator';
 import { Participant } from 'src/participants/participant.entity';
+import { MeetingsService } from 'src/meetings/meetings.service';
+import { AccessGuard } from 'src/participants/guard/access.guard';
 
 @ApiTags('Suggestion')
 @Controller('suggestion')
 export class SuggestionsController {
-  constructor(private readonly suggestionsService: SuggestionsService) {}
+  constructor(
+    private readonly suggestionsService: SuggestionsService,
+    private readonly meetingsService: MeetingsService,
+  ) {}
 
   @ApiCreatedResponse({
     description: 'Successfully get suggestions for meeting',
@@ -42,8 +49,14 @@ export class SuggestionsController {
   @UseBearerAuth()
   @Get('/:meetingId')
   public async getSuggestions(
+    @Usr() requester: User,
     @Param('meetingId', ParseUUIDPipe) meetingId: string,
   ): Promise<Suggestion[]> {
+    if (
+      !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
+    ) {
+      throw new ForbiddenException('Not host of meeting');
+    }
     return this.suggestionsService.getSuggestions(meetingId);
   }
 
@@ -62,15 +75,27 @@ export class SuggestionsController {
     @AccessUser() participant: Participant,
     @Param('meetingId', ParseUUIDPipe) meetingId: string,
   ): Promise<Suggestion[]> {
+    if (participant.meetingId !== meetingId) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    }
     return this.suggestionsService.getSuggestions(meetingId, participant);
   }
 
+  @ApiCreatedResponse({
+    description: 'Created suggestion for meeting',
+    type: Suggestion,
+  })
   @UseAuth(AuthGuard('participant'))
   @Post('/')
   public async createSuggestion(
     @AccessUser() participant: Participant,
     @Body() createSuggestionDto: CreateSuggestionDto,
   ): Promise<Suggestion> {
+    if (participant.meetingId !== createSuggestionDto.meetingId) {
+      throw new ForbiddenException(
+        'Not allowed to create suggestion for this meeting',
+      );
+    }
     return this.suggestionsService.createSuggestion(
       createSuggestionDto,
       participant,
@@ -85,16 +110,39 @@ export class SuggestionsController {
     name: 'suggestionId',
     description: 'The id of the suggestion',
   })
-  @UseAuth(AuthGuard('participant'))
+  @UseAuth(AccessGuard)
   @ApiBody({ type: UpdateSuggestionDto })
   @Put('/:suggestionId')
   public async updateSuggestion(
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('suggestionId', ParseUUIDPipe) suggestionId: string,
     @Body() updateSuggestionDto: UpdateSuggestionDto,
   ): Promise<Suggestion> {
+    const suggestion = await this.suggestionsService.findOneSuggestion(
+      suggestionId,
+    );
+    if (!suggestion) {
+      throw new NotFoundException('Suggestion cannot be found');
+    }
+
+    if (
+      userOrParticipant['meetingId'] &&
+      (userOrParticipant as Participant).meetingId !== suggestion.meetingId
+    ) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        suggestion.meetingId,
+      ))
+    ) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    }
+
     return this.suggestionsService.updateSuggestion(
       updateSuggestionDto,
-      suggestionId,
+      suggestion,
     );
   }
 
@@ -125,11 +173,34 @@ export class SuggestionsController {
     name: 'suggestionId',
     description: 'The id of the suggestion',
   })
-  @UseAuth(AuthGuard('participant'))
+  @UseAuth(AccessGuard)
   @Delete('/:suggestionId')
   public async deleteSuggestion(
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('suggestionId', ParseUUIDPipe) suggestionId: string,
   ): Promise<Suggestion> {
-    return this.suggestionsService.deleteSuggestion(suggestionId);
+    const suggestion = await this.suggestionsService.findOneSuggestion(
+      suggestionId,
+    );
+    if (!suggestion) {
+      throw new NotFoundException('Suggestion to be deleted not found');
+    }
+
+    if (
+      userOrParticipant['meetingId'] &&
+      (userOrParticipant as Participant).meetingId !== suggestion.meetingId
+    ) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        suggestion.meetingId,
+      ))
+    ) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    }
+
+    return this.suggestionsService.deleteSuggestion(suggestion);
   }
 }
