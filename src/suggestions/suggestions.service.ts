@@ -55,12 +55,8 @@ export class SuggestionsService {
 
   public async updateSuggestion(
     updateSuggestionDto: UpdateSuggestionDto,
-    suggestionId: string,
+    suggestion: Suggestion,
   ) {
-    const suggestion = await this.findOneSuggestion(suggestionId);
-    if (!suggestion) {
-      throw new NotFoundException('Suggestion cannot be found');
-    }
     const suggestionToBeUpdated = this.suggestionsRepository.create({
       ...suggestion,
       ...updateSuggestionDto,
@@ -90,19 +86,19 @@ export class SuggestionsService {
     const suggestion = await this.suggestionsRepository.save(
       suggestionToBeAccepted,
     );
-    await this.agendaItemsService.createOneAgendaItemFromSuggestion(suggestion);
+    return this.agendaItemsService.createOneAgendaItemFromSuggestion(
+      suggestion,
+    );
   }
 
-  public async deleteSuggestion(suggestionId: string): Promise<Suggestion> {
-    const suggestionToBeDeleted = await this.findOneSuggestion(suggestionId);
-    if (!suggestionToBeDeleted) {
-      throw new NotFoundException('Suggestion to be deleted not found');
-    }
+  public async deleteSuggestion(
+    suggestionToBeDeleted: Suggestion,
+  ): Promise<Suggestion> {
     await this.suggestionsRepository.remove(suggestionToBeDeleted);
     return suggestionToBeDeleted;
   }
 
-  private async findOneSuggestion(suggestionId: string) {
+  public async findOneSuggestion(suggestionId: string) {
     return this.suggestionsRepository.findOne({
       id: suggestionId,
     });

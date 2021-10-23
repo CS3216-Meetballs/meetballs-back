@@ -36,7 +36,7 @@ export class Suggestion {
   @Column({ type: 'integer' })
   expectedDuration: number;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'varchar', nullable: true })
   participantId?: string;
 
   @ApiHideProperty()
