@@ -1,10 +1,11 @@
-import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import * as morgan from 'morgan';
 import * as helmet from 'helmet';
 import * as compression from 'compression';
+import { CustomClassSerializerInterceptor } from './shared/interceptors/serialize.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -34,7 +35,9 @@ async function bootstrap() {
     });
   }
 
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+  app.useGlobalInterceptors(
+    new CustomClassSerializerInterceptor(app.get(Reflector)),
+  );
   app.use(morgan('tiny'));
 
   if (['production', 'staging'].indexOf(process.env.NODE_ENV) === -1) {
