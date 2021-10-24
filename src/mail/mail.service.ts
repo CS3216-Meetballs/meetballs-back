@@ -100,6 +100,8 @@ export class MailService {
       year: 'numeric',
       hour: 'numeric',
       minute: 'numeric',
+      timeZoneName: 'short',
+      timeZone: 'Asia/Singapore',
     });
   }
 }
