@@ -1,5 +1,5 @@
 import { ApiHideProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { IsEmail } from 'class-validator';
 import {
   Column,
@@ -21,11 +21,12 @@ export class Participant {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar' })
+  @Column({ type: 'uuid' })
   meetingId: string;
 
   @Column({ type: 'varchar' })
   @IsEmail()
+  @Expose({ groups: ['role:host'] })
   userEmail: string;
 
   @ApiHideProperty()
