@@ -15,10 +15,10 @@ import {
 import {
   Pagination,
   IPaginationOptions,
-  paginate,
+  createPaginationObject,
 } from 'nestjs-typeorm-paginate';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Any, Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { Meeting } from './meeting.entity';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
@@ -44,6 +44,9 @@ export class MeetingsService {
     pagingOptions: IPaginationOptions,
   ): Promise<Pagination<Meeting>> {
     const { type, orderBy } = queryOptions;
+    const limit = Number(pagingOptions.limit);
+    const page = Number(pagingOptions.page);
+    const skip = Number(queryOptions.skip);
 
     let queryBuilder: SelectQueryBuilder<Meeting> =
       this.meetingRepository.createQueryBuilder('m');
@@ -63,8 +66,42 @@ export class MeetingsService {
       'm.started_at',
       orderBy === MeetingOrderBy.ASCENDING ? 'ASC' : 'DESC',
     );
+    queryBuilder = queryBuilder.limit(limit).offset((page - 1) * limit + skip);
 
-    return paginate<Meeting>(queryBuilder, pagingOptions);
+    const promises: [Promise<Meeting[]>, Promise<number>] = [
+      limit === 0 || page === 0 ? Promise.resolve([]) : queryBuilder.getMany(),
+      this.countQuery(queryBuilder),
+    ];
+
+    const [items, total] = await Promise.all(promises);
+    return createPaginationObject({
+      items: items,
+      totalItems: total,
+      currentPage: +page,
+      limit: +limit,
+      route: pagingOptions.route,
+    });
+  }
+
+  private async countQuery(
+    queryBuilder: SelectQueryBuilder<Meeting>,
+  ): Promise<number> {
+    const totalQueryBuilder = queryBuilder.clone();
+
+    totalQueryBuilder
+      .skip(undefined)
+      .limit(undefined)
+      .offset(undefined)
+      .take(undefined);
+
+    const { value } = await queryBuilder.connection
+      .createQueryBuilder()
+      .select('COUNT(*)', 'value')
+      .from(`(${totalQueryBuilder.getQuery()})`, 'uniqueTableAlias')
+      .setParameters(queryBuilder.getParameters())
+      .getRawOne<{ value: string }>();
+
+    return Number(value);
   }
 
   public async findOneById(
