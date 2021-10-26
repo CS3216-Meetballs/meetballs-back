@@ -52,6 +52,15 @@ export class MultipleMeetingQuery {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Min(1)
+  @Min(0)
   page?: number = 1;
+
+  /**
+   * Number of entry to skip
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  skip?: number = 0;
 }
