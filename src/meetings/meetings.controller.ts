@@ -23,6 +23,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { Pagination } from 'nestjs-typeorm-paginate';
 import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
 import { Usr } from '../shared/decorators/user.decorator';
 import { User } from '../users/user.entity';
@@ -33,6 +34,8 @@ import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
 import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-response.dto';
 import { Participant } from 'src/participants/participant.entity';
+import { PaginatedMeetings } from './dto/paginated-meetings.dto';
+import { MultipleMeetingQuery } from './dto/multiple-meeting-query.dto';
 
 @ApiTags('Meeting')
 @Controller('meeting')
@@ -42,18 +45,23 @@ export class MeetingsController {
     private readonly meetingGateway: MeetingSocketGateway,
   ) {}
 
+  @ApiOkResponse({
+    type: PaginatedMeetings,
+    description: 'Paginated List of meetings created by the host',
+  })
   @UseBearerAuth()
   @ApiQuery({ name: 'type', enum: ['all', 'upcoming', 'past'] })
   @Get('/')
   public async getMeetings(
-    @Query('type') type: 'all' | 'upcoming' | 'past',
+    @Query() meetingQuery: MultipleMeetingQuery,
     @Usr() requester: User,
-  ) {
-    const meeting = await this.meetingsService.findMultiple(
-      type,
-      requester.uuid,
-    );
-    return meeting;
+  ): Promise<Pagination<Meeting>> {
+    const { limit, page, ...queryOptions } = meetingQuery;
+
+    return this.meetingsService.findMultiple(queryOptions, requester.uuid, {
+      limit: Math.min(50, limit),
+      page,
+    });
   }
 
   @ApiOkResponse({

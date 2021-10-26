@@ -1,3 +1,8 @@
+import {
+  MeetingOrderBy,
+  MeetingQueryType,
+  MultipleMeetingQuery,
+} from './dto/multiple-meeting-query.dto';
 import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 import { AgendaItem } from './../agenda-items/agenda-item.entity';
 import {
@@ -7,14 +12,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import {
+  Pagination,
+  IPaginationOptions,
+  createPaginationObject,
+} from 'nestjs-typeorm-paginate';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Any, FindConditions, Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { Meeting } from './meeting.entity';
 import { UpdateMeetingDto } from './dto/update-meeting.dto';
 import { ZoomMeetingStatus } from '../shared/enum/zoom-meeting-status.enum';
 import { isArray } from 'lodash';
-import { JwtService } from '@nestjs/jwt';
 import { JwtConfigService } from 'src/config/jwt.config';
 import { User } from 'src/users/user.entity';
 import { randomBytes, createCipheriv, scryptSync } from 'crypto';
@@ -26,30 +35,73 @@ export class MeetingsService {
     private readonly meetingRepository: Repository<Meeting>,
     @InjectRepository(AgendaItem)
     private readonly agendaRepository: Repository<AgendaItem>,
-    private readonly jwtService: JwtService,
     private readonly jwtConfigService: JwtConfigService,
   ) {}
 
   public async findMultiple(
-    type: string,
+    queryOptions: Omit<MultipleMeetingQuery, 'page' | 'limit'>,
     requesterId: string,
-  ): Promise<Meeting[]> {
-    const findCondition: FindConditions<Meeting> =
-      type === 'past'
-        ? {
-            hostId: requesterId,
-            type: ZoomMeetingStatus.ENDED,
-          }
-        : type === 'all'
-        ? {
-            hostId: requesterId,
-          }
-        : {
-            // default type is upcoming
-            hostId: requesterId,
-            type: Any([ZoomMeetingStatus.WAITING, ZoomMeetingStatus.STARTED]),
-          };
-    return this.meetingRepository.find(findCondition);
+    pagingOptions: IPaginationOptions,
+  ): Promise<Pagination<Meeting>> {
+    const { type, orderBy } = queryOptions;
+    const limit = Number(pagingOptions.limit);
+    const page = Number(pagingOptions.page);
+    const skip = Number(queryOptions.skip);
+
+    let queryBuilder: SelectQueryBuilder<Meeting> =
+      this.meetingRepository.createQueryBuilder('m');
+    queryBuilder = queryBuilder.andWhere('m.host_id = :requesterId', {
+      requesterId,
+    });
+    if (type !== MeetingQueryType.ALL) {
+      queryBuilder = queryBuilder.andWhere('m.type = ANY(:types)', {
+        types:
+          type === MeetingQueryType.PAST
+            ? [ZoomMeetingStatus.ENDED]
+            : [ZoomMeetingStatus.WAITING, ZoomMeetingStatus.STARTED],
+      });
+    }
+
+    queryBuilder = queryBuilder.orderBy(
+      'm.started_at',
+      orderBy === MeetingOrderBy.ASCENDING ? 'ASC' : 'DESC',
+    );
+    queryBuilder = queryBuilder.limit(limit).offset((page - 1) * limit + skip);
+
+    const promises: [Promise<Meeting[]>, Promise<number>] = [
+      limit === 0 || page === 0 ? Promise.resolve([]) : queryBuilder.getMany(),
+      this.countQuery(queryBuilder),
+    ];
+
+    const [items, total] = await Promise.all(promises);
+    return createPaginationObject({
+      items: items,
+      totalItems: total,
+      currentPage: +page,
+      limit: +limit,
+      route: pagingOptions.route,
+    });
+  }
+
+  private async countQuery(
+    queryBuilder: SelectQueryBuilder<Meeting>,
+  ): Promise<number> {
+    const totalQueryBuilder = queryBuilder.clone();
+
+    totalQueryBuilder
+      .skip(undefined)
+      .limit(undefined)
+      .offset(undefined)
+      .take(undefined);
+
+    const { value } = await queryBuilder.connection
+      .createQueryBuilder()
+      .select('COUNT(*)', 'value')
+      .from(`(${totalQueryBuilder.getQuery()})`, 'uniqueTableAlias')
+      .setParameters(queryBuilder.getParameters())
+      .getRawOne<{ value: string }>();
+
+    return Number(value);
   }
 
   public async findOneById(

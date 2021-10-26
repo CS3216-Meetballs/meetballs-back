@@ -59,9 +59,18 @@ export class MeetingSocketGateway
   }
 
   emitParticipantsUpdated(meetingId: string, participant: Participant) {
+    this.server
+      .to(meetingId)
+      .emit(
+        'host_participantUpdated',
+        JSON.stringify(classToPlain(participant, { groups: ['role:host'] })),
+      );
     return this.server
       .to(meetingId)
-      .emit('participantUpdated', JSON.stringify(classToPlain(participant)));
+      .emit(
+        'participantUpdated',
+        JSON.stringify(classToPlain(participant, { groups: [] })),
+      );
   }
 
   emitAgendaUpdated(meetingId: string) {

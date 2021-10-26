@@ -35,7 +35,7 @@ export class Meeting {
   @IsPositive()
   duration: number;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'uuid', nullable: true })
   hostId?: string;
 
   @ApiHideProperty()
