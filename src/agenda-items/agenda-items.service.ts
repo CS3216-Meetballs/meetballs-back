@@ -39,7 +39,7 @@ export class AgendaItemsService {
     const createdAgendaItem = await this.agendaItemRepository.save(
       agendaItemToBeCreated,
     );
-    await this.updateAgendaItemsPosition(meetingId, position);
+    // await this.updateAgendaItemsPositionOld(meetingId, position);
     return createdAgendaItem;
   }
 
@@ -68,26 +68,50 @@ export class AgendaItemsService {
       );
     }
     try {
+      const lastPosition =
+        (await this.agendaItemRepository.count({ meetingId })) - 1;
       await this.agendaItemRepository.remove(agendaItemToBeDeleted);
-      await this.updateAgendaItemsPosition(meetingId, position);
+      await this.updateAgendaItemsPosition(meetingId, position, lastPosition);
     } catch (err) {
       throw new BadRequestException(err.message);
     }
   }
 
   // Decrement the positions of the agenda items with a greater position by 1 (Is this necessary?)
+  // private async updateAgendaItemsPositionOld(
+  //   meetingId: string,
+  //   position: number,
+  // ): Promise<void> {
+  //   await this.agendaItemRepository
+  //     .createQueryBuilder()
+  //     .update(AgendaItem)
+  //     .set({
+  //       position: () => 'position - 1',
+  //     })
+  //     .where({ meetingId, position: MoreThan(position) })
+  //     .execute();
+  // }
+
   private async updateAgendaItemsPosition(
     meetingId: string,
     position: number,
+    lastPosition: number,
   ): Promise<void> {
-    await this.agendaItemRepository
-      .createQueryBuilder()
-      .update(AgendaItem)
-      .set({
-        position: () => 'position - 1',
-      })
-      .where({ meetingId, position: MoreThan(position) })
-      .execute();
+    let agendaItemsToBeUpdated = await this.agendaItemRepository.find({
+      meetingId,
+      position: MoreThan(position),
+    });
+    agendaItemsToBeUpdated = agendaItemsToBeUpdated.map((agendaItem) => {
+      return {
+        ...agendaItem,
+        position: agendaItem.position - 1,
+      };
+    });
+    await this.agendaItemRepository.save(agendaItemsToBeUpdated);
+    await this.agendaItemRepository.delete({
+      meetingId,
+      position: lastPosition,
+    });
   }
 
   public async getAgendaItemByMeetingIdAndPosition(
