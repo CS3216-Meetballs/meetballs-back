@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   Param,
@@ -91,9 +92,27 @@ export class UploadsController {
         meetingId,
       ))
     ) {
-      throw new ForbiddenException('Not allowed to write');
+      throw new ForbiddenException('Not allowed to read meeting');
     }
 
+    return this.uploadsService.createDownloadLink(
+      meetingId,
+      readRequest.uploader,
+      readRequest.name,
+    );
+  }
+
+  /**
+   * Deletes the file from s3
+   */
+  @ApiQuery({ description: 'The file details', type: ReadRequestDto })
+  @UseAuth(AccessGuard)
+  @Delete('/:meetingUuid')
+  async deleteFile(
+    @AccessUser() userOrParticipant: User | Participant,
+    @Param('meetingUuid') meetingId: string,
+    @Query() readRequest: ReadRequestDto,
+  ) {
     if (
       userOrParticipant['meetingId'] &&
       (userOrParticipant as Participant).meetingId !== meetingId
@@ -106,13 +125,14 @@ export class UploadsController {
         meetingId,
       ))
     ) {
-      throw new ForbiddenException('Not allowed to read meeting');
+      throw new ForbiddenException('Not allowed to delete');
     }
 
-    return this.uploadsService.createDownloadLink(
+    await this.uploadsService.deleteFile(
       meetingId,
       readRequest.uploader,
       readRequest.name,
     );
+    return;
   }
 }

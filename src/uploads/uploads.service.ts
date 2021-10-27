@@ -43,6 +43,19 @@ export class UploadsService {
     };
   }
 
+  public async deleteFile(
+    meetingId: string,
+    uploaderId: string,
+    filename: string,
+  ) {
+    const key = `${this.prefix}/${meetingId}/${uploaderId}/${filename}`;
+
+    return this.s3.deleteObject({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+  }
+
   public async createDownloadLink(
     meetingId: string,
     uploaderId: string,
