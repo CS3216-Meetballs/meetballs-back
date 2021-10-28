@@ -39,10 +39,23 @@ export class Suggestion {
   @Column({ type: 'varchar', nullable: true })
   participantId?: string;
 
-  @ApiHideProperty()
+  @ManyToOne(
+    () => Participant,
+    (participant: Participant) => participant.suggestions,
+    {
+      cascade: true,
+      onDelete: 'SET NULL',
+    },
+  )
+  @JoinColumn({ name: 'participant_id', referencedColumnName: 'id' })
+  participant?: Participant;
+
+  // the arrowed speaker
   @ManyToOne(() => Participant, {
     cascade: true,
     onDelete: 'SET NULL',
+    nullable: true,
+    eager: true,
   })
-  participant?: Participant;
+  speaker?: Participant;
 }
