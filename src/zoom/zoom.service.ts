@@ -183,13 +183,15 @@ export class ZoomService {
       return null;
     } else if (currParticipant) {
       console.log('Updated participant');
-      return this.participantRepository.save({
+      const participant = {
         ...currParticipant,
         timeJoined: new Date(join_time),
-      });
+      };
+      await this.participantRepository.save(participant);
+      return participant;
     } else {
       console.log('Created participant');
-      return this.participantRepository.save({
+      const participant = await this.participantRepository.save({
         meetingId: meeting.id,
         userEmail: email,
         userName: user_name,
@@ -198,6 +200,9 @@ export class ZoomService {
             ? ParticipantRole.ADMIN
             : ParticipantRole.CONFERENCE_MEMBER,
         timeJoined: new Date(join_time),
+      });
+      return this.participantRepository.findOne({
+        id: participant.id,
       });
     }
   }
