@@ -68,6 +68,12 @@ export class ParticipantsService {
           (participant) => participant.userEmail,
         ),
       ];
+      if (new Set([...listOfUserEmails]).size !== listOfUserEmails.length) {
+        throw new BadRequestException(
+          'There are duplicate emails in your csv, please make sure all of the emails are unique',
+        );
+      }
+
       const participants = await this.participantsRepository.find({
         meetingId: createParticipantsDto.participants[0].meetingId,
         userEmail: In(listOfUserEmails),
@@ -79,6 +85,7 @@ export class ParticipantsService {
             .join(', ')} already exist`,
         );
       }
+
       const participantsToBeCreated = this.participantsRepository.create([
         ...createParticipantsDto.participants,
       ]);
