@@ -117,7 +117,6 @@ export class ZoomController {
   @Post('joined')
   public automateAttendance(@Body() joinDetails: ZoomJoinedSubscriptionDto) {
     const { payload, event } = joinDetails;
-    console.log(joinDetails);
 
     if (event !== 'meeting.participant_joined') {
       throw new ForbiddenException('Invalid subscription type');

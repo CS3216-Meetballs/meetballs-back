@@ -6,7 +6,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { classToPlain } from 'class-transformer';
+import { classToPlain, plainToClass } from 'class-transformer';
 import { Server, Socket } from 'socket.io';
 import { Meeting } from '../meetings/meeting.entity';
 
@@ -65,12 +65,11 @@ export class MeetingSocketGateway
         'host_participantUpdated',
         JSON.stringify(classToPlain(participant, { groups: ['role:host'] })),
       );
+
+    delete participant.userEmail;
     return this.server
       .to(meetingId)
-      .emit(
-        'participantUpdated',
-        JSON.stringify(classToPlain(participant, { groups: [] })),
-      );
+      .emit('participantUpdated', JSON.stringify(participant));
   }
 
   emitAgendaUpdated(meetingId: string) {

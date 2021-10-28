@@ -170,6 +170,7 @@ export class ZoomService {
       console.log('meeting not tracked by meetballs');
       return null;
     }
+    console.log(joinedParticipant);
 
     const { email, user_name, join_time, id } = joinedParticipant;
 
@@ -178,7 +179,7 @@ export class ZoomService {
       userEmail: email,
     });
     if (currParticipant && currParticipant.timeJoined != null) {
-      console.log('already marked as attended');
+      console.log('Already marked as attended');
       return null;
     } else if (currParticipant) {
       console.log('Updated participant');
@@ -187,6 +188,7 @@ export class ZoomService {
         timeJoined: new Date(join_time),
       });
     } else {
+      console.log('Created participant');
       return this.participantRepository.save({
         meetingId: meeting.id,
         userEmail: email,
