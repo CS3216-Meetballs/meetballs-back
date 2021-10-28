@@ -4,15 +4,14 @@ import {
   ArrayMinSize,
   IsArray,
   IsDefined,
-  IsEmail,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
 
 class DeleteParticipant {
-  @IsEmail()
+  @IsUUID()
   @IsDefined()
-  userEmail: string;
+  participantId: string;
 }
 
 export class DeleteParticipantsDto {

@@ -1,6 +1,6 @@
 import { AuthGuard } from '@nestjs/passport';
 import { AccessUser } from './../shared/decorators/participant.decorator';
-import { AccessGuard } from './../participants/guard/access.guard';
+import { AccessGuard } from '../auth/guard/access.guard';
 import {
   Controller,
   Get,

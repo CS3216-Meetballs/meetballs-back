@@ -16,7 +16,7 @@ import { MeetingsService } from './../meetings/meetings.service';
 import { Participant } from '../participants/participant.entity';
 import { User } from '../users/user.entity';
 import { AccessUser } from './../shared/decorators/participant.decorator';
-import { AccessGuard } from './../participants/guard/access.guard';
+import { AccessGuard } from '../auth/guard/access.guard';
 
 @ApiTags('Uploads')
 @Controller('uploads')

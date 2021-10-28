@@ -170,7 +170,7 @@ export class ZoomService {
       console.log('meeting not tracked by meetballs');
       return null;
     }
-    console.log(joinedParticipant);
+    console.log(joinedParticipant?.user_name + ' Joined');
 
     const { email, user_name, join_time, id } = joinedParticipant;
 

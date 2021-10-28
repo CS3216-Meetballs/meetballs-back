@@ -10,6 +10,7 @@ import { SuggestionsService } from './suggestions.service';
 import { AgendaItemsModule } from 'src/agenda-items/agenda-items.module';
 import { MeetingsModule } from 'src/meetings/meetings.module';
 import { ParticipantsModule } from 'src/participants/participants.module';
+import { MeetingSocketModule } from './../meeting-socket/meeting-socket.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ParticipantsModule } from 'src/participants/participants.module';
     MeetingsModule,
     AgendaItemsModule,
     ParticipantsModule,
+    MeetingSocketModule,
   ],
   controllers: [SuggestionsController],
   providers: [SuggestionsService],

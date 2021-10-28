@@ -158,9 +158,9 @@ export class MeetingsService {
       agendaItems: createMeetingDto.agendaItems || [
         {
           position: 0,
-          name: 'Your 1st meeting item',
-          description: 'Click the edit button to edit this agenda item',
-          expectedDuration: 1800000, // 30min
+          name: 'Auto-generated Agenda Item',
+          description: 'Description of Auto-generated Agenda Item',
+          expectedDuration: 300000, // 5min
         },
       ],
     });

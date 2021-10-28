@@ -9,7 +9,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { MailModule } from 'src/mail/mail.module';
 import { AppConfigModule } from 'src/config/config.module';
 import { PassportModule } from '@nestjs/passport';
-import { ParticipantStrategy } from './strategies/participant.strategy';
 
 @Module({
   imports: [
@@ -22,7 +21,7 @@ import { ParticipantStrategy } from './strategies/participant.strategy';
     MeetingsModule,
   ],
   controllers: [ParticipantsController],
+  providers: [ParticipantsService],
   exports: [ParticipantsService],
-  providers: [ParticipantsService, ParticipantStrategy],
 })
 export class ParticipantsModule {}

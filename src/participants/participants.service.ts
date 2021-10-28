@@ -20,7 +20,7 @@ import {
   CreateParticipantsDto,
 } from './dto/create-participant.dto';
 import { DeleteParticipantsDto } from './dto/delete-participants.dto';
-import { ParticipantEmailDto } from './dto/participant-email.dto';
+import { ParticipantDto } from './dto/participant-email.dto';
 import { UpdateParticipantDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { User } from 'src/users/user.entity';
@@ -89,7 +89,10 @@ export class ParticipantsService {
       const participantsToBeCreated = this.participantsRepository.create([
         ...createParticipantsDto.participants,
       ]);
-      return this.participantsRepository.save(participantsToBeCreated);
+      const users = await this.participantsRepository.save(
+        participantsToBeCreated,
+      );
+      return users;
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -100,17 +103,23 @@ export class ParticipantsService {
     requester: User,
   ): Promise<void> {
     const { meetingId, participants } = deleteParticipantsDto;
-    const listOfUserEmails = [...participants].map(
-      (participant) => participant.userEmail,
+    const listOfIds = [...participants].map(
+      (participant) => participant.participantId,
     );
-    if (!isNil(listOfUserEmails.find((email) => email === requester.email))) {
-      throw new BadRequestException('You cannot remove yourself');
-    }
     try {
       const participantsToBeDeleted = await this.participantsRepository.find({
         meetingId,
-        userEmail: In(listOfUserEmails),
+        id: In(listOfIds),
       });
+      if (
+        !isNil(
+          participantsToBeDeleted.find(
+            (ppl) => ppl.userEmail === requester.email,
+          ),
+        )
+      ) {
+        throw new BadRequestException('You cannot remove yourself');
+      }
       await this.participantsRepository.remove(participantsToBeDeleted);
     } catch (err) {
       throw new BadRequestException(err.message);
@@ -120,10 +129,9 @@ export class ParticipantsService {
   public async updateParticipant(
     updateParticipantDto: UpdateParticipantDto,
   ): Promise<Participant> {
-    const { userEmail, meetingId } = updateParticipantDto;
+    const { participantId } = updateParticipantDto;
     const participantToUpdate = await this.participantsRepository.findOne({
-      meetingId,
-      userEmail,
+      id: participantId,
     });
     if (!participantToUpdate) {
       throw new NotFoundException('Participant not found');
@@ -150,11 +158,11 @@ export class ParticipantsService {
 
   public async markPresent(
     meetingId: string,
-    participantEmailDto: ParticipantEmailDto,
+    participantDto: ParticipantDto,
   ): Promise<Participant> {
     const participant = await this.participantsRepository.findOne({
       meetingId,
-      userEmail: participantEmailDto.email,
+      id: participantDto.participantId,
     });
     if (!participant) {
       throw new NotFoundException('Participant not found');
@@ -167,11 +175,11 @@ export class ParticipantsService {
 
   public async markAbsent(
     meetingId: string,
-    participantEmailDto: ParticipantEmailDto,
+    participantDto: ParticipantDto,
   ): Promise<Participant> {
     const participant = await this.participantsRepository.findOne({
       meetingId,
-      userEmail: participantEmailDto.email,
+      id: participantDto.participantId,
     });
     if (!participant) {
       throw new NotFoundException('Participant not found');
@@ -184,11 +192,11 @@ export class ParticipantsService {
 
   public async markDuplicate(
     meetingId: string,
-    participantEmailDto: ParticipantEmailDto,
+    participantDto: ParticipantDto,
   ): Promise<Participant> {
     const participant = await this.participantsRepository.findOne({
       meetingId,
-      userEmail: participantEmailDto.email,
+      id: participantDto.participantId,
     });
     if (!participant) {
       throw new NotFoundException('Participant not found');

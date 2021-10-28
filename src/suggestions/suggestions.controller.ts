@@ -28,8 +28,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { AccessUser } from 'src/shared/decorators/participant.decorator';
 import { Participant } from 'src/participants/participant.entity';
 import { MeetingsService } from 'src/meetings/meetings.service';
-import { AccessGuard } from 'src/participants/guard/access.guard';
 import { AgendaItem } from './../agenda-items/agenda-item.entity';
+import { AccessGuard } from 'src/auth/guard/access.guard';
+import { MeetingSocketGateway } from './../meeting-socket/meeting-socket.gateway';
 
 @ApiTags('Suggestion')
 @Controller('suggestion')
@@ -37,6 +38,7 @@ export class SuggestionsController {
   constructor(
     private readonly suggestionsService: SuggestionsService,
     private readonly meetingsService: MeetingsService,
+    private readonly meetingSocketGateway: MeetingSocketGateway,
   ) {}
 
   @ApiCreatedResponse({
@@ -97,10 +99,17 @@ export class SuggestionsController {
         'Not allowed to create suggestion for this meeting',
       );
     }
-    return this.suggestionsService.createSuggestion(
+    const suggestion = await this.suggestionsService.createSuggestion(
       createSuggestionDto,
       participant,
     );
+
+    this.meetingSocketGateway.emitSuggestionsUpdated(
+      suggestion.meetingId,
+      suggestion,
+    );
+
+    return suggestion;
   }
 
   @ApiOkResponse({
@@ -141,10 +150,16 @@ export class SuggestionsController {
       throw new ForbiddenException('Not allowed to access meeting');
     }
 
-    return this.suggestionsService.updateSuggestion(
+    const updatedSuggestion = await this.suggestionsService.updateSuggestion(
       updateSuggestionDto,
       suggestion,
     );
+    this.meetingSocketGateway.emitSuggestionsUpdated(
+      suggestion.meetingId,
+      updatedSuggestion,
+    );
+
+    return updatedSuggestion;
   }
 
   @ApiCreatedResponse({
@@ -161,10 +176,20 @@ export class SuggestionsController {
     @Param('suggestionId', ParseUUIDPipe) suggestionId: string,
     @Usr() requester: User,
   ): Promise<AgendaItem> {
-    return this.suggestionsService.markSuggestionAsAccepted(
-      suggestionId,
-      requester.uuid,
+    const [suggestion, agendaItem] =
+      await this.suggestionsService.markSuggestionAsAccepted(
+        suggestionId,
+        requester.uuid,
+      );
+
+    this.meetingSocketGateway.emitSuggestionsUpdated(
+      suggestion.meetingId,
+      suggestion,
     );
+
+    this.meetingSocketGateway.emitAgendaUpdated(agendaItem.meetingId);
+
+    return agendaItem;
   }
 
   @ApiOkResponse({
@@ -203,6 +228,11 @@ export class SuggestionsController {
       throw new ForbiddenException('Not allowed to access meeting');
     }
 
-    return this.suggestionsService.deleteSuggestion(suggestion);
+    const deleted = await this.suggestionsService.deleteSuggestion(suggestion);
+    this.meetingSocketGateway.emitSuggestionsDeleted(
+      deleted.meetingId,
+      suggestionId,
+    );
+    return deleted;
   }
 }

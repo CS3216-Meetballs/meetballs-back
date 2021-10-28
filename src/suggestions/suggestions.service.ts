@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AgendaItemsService } from 'src/agenda-items/agenda-items.service';
 import { MeetingsService } from 'src/meetings/meetings.service';
 import { Participant } from 'src/participants/participant.entity';
-import { ParticipantsService } from 'src/participants/participants.service';
+import { AgendaItem } from './../agenda-items/agenda-item.entity';
 
 import { Repository } from 'typeorm';
 import { CreateSuggestionDto } from './dto/create-suggestion.dto';
@@ -21,7 +21,6 @@ export class SuggestionsService {
     private readonly suggestionsRepository: Repository<Suggestion>,
     private readonly agendaItemsService: AgendaItemsService,
     private readonly meetingsService: MeetingsService,
-    private readonly participantsService: ParticipantsService,
   ) {}
 
   public async getSuggestions(
@@ -91,7 +90,7 @@ export class SuggestionsService {
   public async markSuggestionAsAccepted(
     suggestionId: string,
     requesterId: string,
-  ) {
+  ): Promise<[Suggestion, AgendaItem]> {
     const suggestionToBeAccepted = await this.findOneSuggestion(suggestionId);
     if (!suggestionToBeAccepted) {
       throw new NotFoundException('Suggestion cannot be found');
@@ -110,9 +109,12 @@ export class SuggestionsService {
     const suggestion = await this.suggestionsRepository.save(
       suggestionToBeAccepted,
     );
-    return this.agendaItemsService.createOneAgendaItemFromSuggestion(
-      suggestion,
-    );
+    const newAgenda =
+      await this.agendaItemsService.createOneAgendaItemFromSuggestion(
+        suggestion,
+      );
+
+    return [suggestion, newAgenda];
   }
 
   public async deleteSuggestion(

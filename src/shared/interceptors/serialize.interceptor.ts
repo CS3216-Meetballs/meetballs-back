@@ -18,6 +18,7 @@ export class CustomClassSerializerInterceptor extends ClassSerializerInterceptor
       ...contextOptions,
       groups: request?.user?.uuid ? ['role:host'] : [], // Pseudo
     };
+
     return next
       .handle()
       .pipe(

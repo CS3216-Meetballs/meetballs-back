@@ -1,6 +1,6 @@
 import { MeetingsService } from './../meetings/meetings.service';
 import { AccessUser } from '../shared/decorators/participant.decorator';
-import { AccessGuard } from './guard/access.guard';
+import { AccessGuard } from '../auth/guard/access.guard';
 import {
   Body,
   Controller,
@@ -31,7 +31,7 @@ import { UpdateParticipantDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
 import { ParticipantsService } from './participants.service';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
-import { ParticipantEmailDto } from './dto/participant-email.dto';
+import { ParticipantDto } from './dto/participant-email.dto';
 import {
   CreateParticipantMagicLinkDto,
   CreateParticipantsMagicLinkDto,
@@ -67,17 +67,16 @@ export class ParticipantsController {
     @Usr() user: User,
     @Body() createParticipantsDto: CreateParticipantsDto,
   ): Promise<Participant[]> {
-    if (
-      !(await this.meetingsService.isHostOfMeeting(
-        user.uuid,
-        createParticipantsDto.participants[0].meetingId,
-      ))
-    ) {
+    const meetingId = createParticipantsDto.participants[0].meetingId;
+    if (!(await this.meetingsService.isHostOfMeeting(user.uuid, meetingId))) {
       throw new ForbiddenException('Not allowed to create');
     }
 
     const createdParticipants =
       await this.participantsService.createParticipants(createParticipantsDto);
+    createdParticipants.forEach((participant) =>
+      this.meetingGateway.emitParticipantsUpdated(meetingId, participant),
+    );
     return createdParticipants;
   }
 
@@ -103,10 +102,19 @@ export class ParticipantsController {
     ) {
       throw new ForbiddenException('Not allowed to delete');
     }
-    return this.participantsService.deleteParticipants(
+
+    await this.participantsService.deleteParticipants(
       deleteParticipantsDto,
       requester,
     );
+    deleteParticipantsDto.participants.forEach((p) =>
+      this.meetingGateway.emitParticipantsDeleted(
+        deleteParticipantsDto.meetingId,
+        p.participantId,
+      ),
+    );
+
+    return;
   }
 
   @ApiOkResponse({
@@ -204,12 +212,12 @@ export class ParticipantsController {
     description: 'Successfully marked participant as present',
   })
   @UseBearerAuth()
-  @ApiBody({ type: ParticipantEmailDto })
+  @ApiBody({ type: ParticipantDto })
   @Put('/:meetingUuid/present')
   public async markPresent(
     @Usr() requester: User,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
-    @Body() participantEmail: ParticipantEmailDto,
+    @Body() participantEmail: ParticipantDto,
   ): Promise<void> {
     if (
       !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
@@ -228,12 +236,12 @@ export class ParticipantsController {
     description: 'Successfully marked participant as absent',
   })
   @UseBearerAuth()
-  @ApiBody({ type: ParticipantEmailDto })
+  @ApiBody({ type: ParticipantDto })
   @Put('/:meetingUuid/absent')
   public async markAbsent(
     @Usr() requester: User,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
-    @Body() participantEmail: ParticipantEmailDto,
+    @Body() participantEmail: ParticipantDto,
   ): Promise<void> {
     if (
       !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
@@ -252,12 +260,12 @@ export class ParticipantsController {
     description: 'Successfully marked participant as duplicate',
   })
   @UseBearerAuth()
-  @ApiBody({ type: ParticipantEmailDto })
+  @ApiBody({ type: ParticipantDto })
   @Put('/:meetingUuid/duplicate')
   public async markDuplicate(
     @Usr() requester: User,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
-    @Body() participantEmail: ParticipantEmailDto,
+    @Body() participantEmail: ParticipantDto,
   ): Promise<void> {
     if (
       !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
