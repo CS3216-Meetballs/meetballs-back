@@ -53,8 +53,11 @@ export class ParticipantsController {
    * @deprecated
    */
   @ApiCreatedResponse({
-    description: 'Successfully created participant',
+    description: 'Successfully created participants',
     type: [Participant],
+  })
+  @ApiBadRequestResponse({
+    description: 'There are participants with emails in the request body',
   })
   @ApiBody({ type: CreateParticipantsDto })
   @UseBearerAuth()
