@@ -1,6 +1,6 @@
 import { MeetingsService } from './../meetings/meetings.service';
 import { AccessUser } from '../shared/decorators/participant.decorator';
-import { AccessGuard } from './guard/access.guard';
+import { AccessGuard } from '../auth/guard/access.guard';
 import {
   Body,
   Controller,

@@ -26,11 +26,11 @@ import { CreateAgendaItemDto } from './dto/create-agenda-item.dto';
 import { UpdateAgendaItemDto } from './dto/update-agenda-item.dto';
 import { UpdateAgendaItemsPositionDto } from './dto/update-agenda-items-position.dto';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
-import { AccessGuard } from 'src/participants/guard/access.guard';
 import { Usr } from 'src/shared/decorators/user.decorator';
 import { User } from 'src/users/user.entity';
 import { Participant } from 'src/participants/participant.entity';
 import { AccessUser } from 'src/shared/decorators/participant.decorator';
+import { AccessGuard } from 'src/auth/guard/access.guard';
 
 @ApiTags('Agenda Item')
 @Controller('agenda-item')

@@ -1,3 +1,4 @@
+import { Participant } from 'src/participants/participant.entity';
 import { HttpService } from '@nestjs/axios';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -8,7 +9,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { catchError, map, Observable } from 'rxjs';
+import { catchError, firstValueFrom, map, Observable } from 'rxjs';
 
 import { CreateUserDto } from './dtos/create-user.dto';
 import { JwtConfigService } from '../config/jwt.config';
@@ -24,10 +25,20 @@ import ConfirmEmailDto from './dtos/confirm-email.dto';
 import ResetPasswordDto from './dtos/reset-password.dto';
 import ChangePasswordDto from './dtos/change-password.dto';
 import { ZoomConfigService } from '../config/zoom.config';
+import { Repository } from 'typeorm';
+import {
+  ParticipantMagicLinkPayload,
+  Version0MagicPayload,
+  Version1MagicPayload,
+} from 'src/shared/interface/generate-participant-magic-link.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ZoomUser } from 'src/shared/interface/zoom-user.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectRepository(Participant)
+    private readonly participantsRepository: Repository<Participant>,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly jwtConfigService: JwtConfigService,
@@ -78,6 +89,46 @@ export class AuthService {
       );
   }
 
+  async getParticipantFromToken(magicToken: string): Promise<Participant> {
+    let payload: ParticipantMagicLinkPayload;
+    try {
+      payload = this.jwtService.verify<ParticipantMagicLinkPayload>(
+        magicToken,
+        {
+          ignoreExpiration: true,
+          secret: this.jwtConfigService.magicLinkTokenOptions.secret,
+        },
+      );
+    } catch (error) {
+      return null;
+    }
+
+    let participant: Participant = null;
+
+    if (payload['ver'] === '1.0.0') {
+      const { pid } = payload as Version1MagicPayload;
+      participant = await this.participantsRepository.findOne({ id: pid });
+    } else {
+      const { meetingId, userEmail } = payload as Version0MagicPayload;
+      participant = await this.participantsRepository.findOne({
+        meetingId,
+        userEmail,
+      });
+    }
+    if (!participant) {
+      return null;
+    }
+
+    const isMatch = await bcrypt.compare(
+      magicToken,
+      participant.hashedMagicLinkToken ?? '',
+    );
+    if (!isMatch) {
+      return null;
+    }
+    return participant;
+  }
+
   /**
    * Gets login user using email and password
    */
@@ -96,17 +147,24 @@ export class AuthService {
   }
 
   async getUserFromToken(accessToken: string): Promise<User> {
-    let payload: TokenPayload;
-    try {
-      payload = this.jwtService.verify<TokenPayload>(accessToken, {
-        ignoreExpiration: false,
-        secret: this.jwtConfigService.accessTokenOptions.secret,
-      });
-    } catch (error) {
-      throw new BadRequestException('Invalid token');
+    const zoomUser = await firstValueFrom(
+      this.httpService
+        .get(`/v2/users/me`, {
+          baseURL: 'https://api.zoom.us',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-type': 'application/json',
+          },
+        })
+        .pipe(
+          map((res) => res.data as ZoomUser),
+          catchError(async (_err) => null as ZoomUser),
+        ),
+    );
+    if (!zoomUser) {
+      return null;
     }
-
-    return this.usersService.findByUuid(payload.userId);
+    return await this.usersService.updateZoomUser(zoomUser);
   }
 
   getJwtAccessToken(

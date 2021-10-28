@@ -1,3 +1,5 @@
+import { ParticipantStrategy } from './strategies/participant.strategy';
+import { Participant } from 'src/participants/participant.entity';
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { JwtModule } from '@nestjs/jwt';
@@ -14,9 +16,11 @@ import { AppConfigModule } from '../config/config.module';
 
 import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Participant]),
     UsersModule,
     PassportModule,
     JwtModule.register({}),
@@ -31,7 +35,13 @@ import { MailModule } from '../mail/mail.module';
       },
     }),
   ],
-  providers: [AuthService, LocalStrategy, JwtStrategy, JwtRefreshStrategy],
+  providers: [
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    ParticipantStrategy,
+  ],
   controllers: [AuthController],
   exports: [AuthService],
 })

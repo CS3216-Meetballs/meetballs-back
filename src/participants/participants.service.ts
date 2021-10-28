@@ -89,7 +89,10 @@ export class ParticipantsService {
       const participantsToBeCreated = this.participantsRepository.create([
         ...createParticipantsDto.participants,
       ]);
-      return this.participantsRepository.save(participantsToBeCreated);
+      const users = await this.participantsRepository.save(
+        participantsToBeCreated,
+      );
+      return users;
     } catch (err) {
       throw new BadRequestException(err.message);
     }
