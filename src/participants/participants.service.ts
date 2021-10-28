@@ -63,6 +63,22 @@ export class ParticipantsService {
     createParticipantsDto: CreateParticipantsDto,
   ): Promise<Participant[]> {
     try {
+      const listOfUserEmails = [
+        ...createParticipantsDto.participants.map(
+          (participant) => participant.userEmail,
+        ),
+      ];
+      const participants = await this.participantsRepository.find({
+        meetingId: createParticipantsDto.participants[0].meetingId,
+        userEmail: In(listOfUserEmails),
+      });
+      if (participants.length !== 0) {
+        throw new BadRequestException(
+          `Participants with emails ${participants
+            .map((p) => p.userEmail)
+            .join(', ')} already exist`,
+        );
+      }
       const participantsToBeCreated = this.participantsRepository.create([
         ...createParticipantsDto.participants,
       ]);
