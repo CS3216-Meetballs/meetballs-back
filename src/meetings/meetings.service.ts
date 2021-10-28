@@ -311,6 +311,7 @@ export class MeetingsService {
 
     targetMeeting.endedAt = currTime;
     targetMeeting.type = ZoomMeetingStatus.ENDED;
+    targetMeeting.zoomUuid = null;
     if (targetMeeting.agendaItems && isArray(targetMeeting.agendaItems)) {
       // last agenda item or just generally any item
       const lastAgendaItemList = targetMeeting.agendaItems.filter(
