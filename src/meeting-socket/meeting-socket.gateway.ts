@@ -66,10 +66,10 @@ export class MeetingSocketGateway
         JSON.stringify(classToPlain(participant, { groups: ['role:host'] })),
       );
 
-    delete participant.userEmail;
+    const { userEmail: _, ...filteredParticipant } = participant;
     return this.server
       .to(meetingId)
-      .emit('participantUpdated', JSON.stringify(participant));
+      .emit('participantUpdated', JSON.stringify(filteredParticipant));
   }
 
   emitAgendaUpdated(meetingId: string) {
