@@ -13,6 +13,7 @@ import { Repository } from 'typeorm';
 import { CreateSuggestionDto } from './dto/create-suggestion.dto';
 import { UpdateSuggestionDto } from './dto/update-suggestion.dto';
 import { Suggestion } from './suggestion.entity';
+import { ParticipantsService } from '../participants/participants.service';
 
 @Injectable()
 export class SuggestionsService {
@@ -21,6 +22,7 @@ export class SuggestionsService {
     private readonly suggestionsRepository: Repository<Suggestion>,
     private readonly agendaItemsService: AgendaItemsService,
     private readonly meetingsService: MeetingsService,
+    private readonly participantsService: ParticipantsService,
   ) {}
 
   public async getSuggestions(
