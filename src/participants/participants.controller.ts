@@ -53,8 +53,12 @@ export class ParticipantsController {
    * @deprecated
    */
   @ApiCreatedResponse({
-    description: 'Successfully created participant',
+    description: 'Successfully created participants',
     type: [Participant],
+  })
+  @ApiBadRequestResponse({
+    description:
+      'There are participants with duplicate emails in the request body OR Participants with some of the emails already exist',
   })
   @ApiBody({ type: CreateParticipantsDto })
   @UseBearerAuth()
