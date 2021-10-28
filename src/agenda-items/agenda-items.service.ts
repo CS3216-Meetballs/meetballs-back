@@ -205,9 +205,11 @@ export class AgendaItemsService {
       name,
       description,
       expectedDuration,
-      speaker: {
-        id: speaker.id,
-      },
+      ...(speaker && {
+        speaker: {
+          id: speaker.id,
+        },
+      }),
     });
     const createdAgendaItem = await this.agendaItemRepository.save(
       agendaItemToBeCreated,

@@ -55,9 +55,9 @@ export class SuggestionsService {
       description,
       expectedDuration,
       participantId: participant.id,
-      speaker: {
+      ...(speakerId && {
         id: arrowedSpeaker.id,
-      },
+      }),
     });
     const createdSuggestion = await this.suggestionsRepository.save(
       suggestionToBeCreated,
@@ -82,7 +82,7 @@ export class SuggestionsService {
       ...(description && { description }),
       ...(expectedDuration && { expectedDuration }),
       ...(name && { name }),
-      ...(speakerId && { speaker }),
+      ...(speakerId ? { speaker } : { speaker: null }),
     };
     const updatedSuggestion = await this.suggestionsRepository.save(suggestion);
     return this.suggestionsRepository.findOne({ id: updatedSuggestion.id });
