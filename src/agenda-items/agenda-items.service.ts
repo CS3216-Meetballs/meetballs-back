@@ -35,12 +35,14 @@ export class AgendaItemsService {
     }
     const agendaItemToBeCreated = this.agendaItemRepository.create({
       ...createAgendaItemDto,
+      ...(createAgendaItemDto.speakerId && {
+        speaker: { id: createAgendaItemDto.speakerId },
+      }),
     });
-    const createdAgendaItem = await this.agendaItemRepository.save(
-      agendaItemToBeCreated,
-    );
+    await this.agendaItemRepository.save(agendaItemToBeCreated);
+
     // await this.updateAgendaItemsPositionOld(meetingId, position);
-    return createdAgendaItem;
+    return this.agendaItemRepository.findOne({ meetingId, position });
   }
 
   public async getAgendaItemsByMeetingId(
