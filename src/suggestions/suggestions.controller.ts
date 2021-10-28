@@ -231,7 +231,7 @@ export class SuggestionsController {
     const deleted = await this.suggestionsService.deleteSuggestion(suggestion);
     this.meetingSocketGateway.emitSuggestionsDeleted(
       deleted.meetingId,
-      deleted.id,
+      suggestionId,
     );
     return deleted;
   }

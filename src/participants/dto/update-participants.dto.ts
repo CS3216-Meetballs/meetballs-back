@@ -19,9 +19,9 @@ export class UpdateParticipantDto {
   @IsDefined()
   meetingId: string;
 
-  @IsEmail()
+  @IsUUID()
   @IsDefined()
-  userEmail: string;
+  participantId: string;
 
   @IsOptional()
   @ApiProperty({

@@ -49,13 +49,13 @@ export class MeetingSocketGateway
       return false;
     }
 
-    const rooms = [id];
     if (user?.uuid === meeting?.hostId) {
-      rooms.push(`${id}_host`);
+      client.join(`${id}_host`);
+    } else {
+      client.join(id);
     }
-    client.join(rooms);
     client
-      .to(id)
+      .to([id, `${id}_host`])
       .emit('userConnected', user?.firstName || participant?.userName);
     // console.log(`${user?.firstName || participant?.userName} connected`);
     return true;
@@ -67,12 +67,14 @@ export class MeetingSocketGateway
 
   emitMeetingUpdated(meetingId: string, meeting: Meeting) {
     return this.server
-      .to(meetingId)
+      .to([meetingId, `${meetingId}_host`])
       .emit('meetingUpdated', JSON.stringify(classToPlain(meeting)));
   }
 
   emitMeetingDeleted(meetingId: string) {
-    this.server.to(meetingId).emit('meetingDeleted', 'Closing connection in 5');
+    this.server
+      .to([meetingId, `${meetingId}_host`])
+      .emit('meetingDeleted', 'Closing connection in 5');
     setTimeout(
       () => this.server.to(meetingId).disconnectSockets(true),
       5 * 1000,
@@ -81,7 +83,7 @@ export class MeetingSocketGateway
 
   emitSuggestionsUpdated(meetingId: string, suggestion: Suggestion) {
     return this.server
-      .to(meetingId)
+      .to([meetingId, `${meetingId}_host`])
       .emit('suggestionUpdated', JSON.stringify(classToPlain(suggestion)));
   }
 
@@ -91,9 +93,9 @@ export class MeetingSocketGateway
 
   emitParticipantsUpdated(meetingId: string, participant: Participant) {
     this.server
-      .to(meetingId)
+      .to(`${meetingId}_host`)
       .emit(
-        'host_participantUpdated',
+        'participantUpdated',
         JSON.stringify(classToPlain(participant, { groups: ['role:host'] })),
       );
 
@@ -104,10 +106,14 @@ export class MeetingSocketGateway
   }
 
   emitParticipantsDeleted(meetingId: string, participantId: string) {
-    return this.server.to(meetingId).emit('participantDeleted', participantId);
+    return this.server
+      .to([meetingId, `${meetingId}_host`])
+      .emit('participantDeleted', participantId);
   }
 
   emitAgendaUpdated(meetingId: string) {
-    return this.server.to(meetingId).emit('agendaUpdated');
+    return this.server
+      .to([meetingId, `${meetingId}_host`])
+      .emit('agendaUpdated');
   }
 }
