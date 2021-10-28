@@ -189,8 +189,11 @@ export class AgendaItemsService {
     await this.agendaItemRepository.save(agendaItemsToReorder);
   }
 
-  public async createOneAgendaItemFromSuggestion(suggestion: Suggestion) {
-    const { meetingId, name, description, expectedDuration } = suggestion;
+  public async createOneAgendaItemFromSuggestion(
+    suggestion: Suggestion,
+  ): Promise<AgendaItem> {
+    const { meetingId, name, description, expectedDuration, speaker } =
+      suggestion;
     const totalAgendaItemsInMeeting = (
       await this.agendaItemRepository.find({
         meetingId,
@@ -202,10 +205,16 @@ export class AgendaItemsService {
       name,
       description,
       expectedDuration,
+      speaker: {
+        id: speaker.id,
+      },
     });
     const createdAgendaItem = await this.agendaItemRepository.save(
       agendaItemToBeCreated,
     );
-    return createdAgendaItem;
+    return this.agendaItemRepository.findOne({
+      meetingId,
+      position: createdAgendaItem.position,
+    });
   }
 }

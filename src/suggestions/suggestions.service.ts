@@ -38,30 +38,54 @@ export class SuggestionsService {
     createSuggestionDto: CreateSuggestionDto,
     participant: Participant,
   ): Promise<Suggestion> {
-    const { meetingId, description, expectedDuration, name } =
+    const { meetingId, description, expectedDuration, name, speakerId } =
       createSuggestionDto;
+    let arrowedSpeaker: Participant;
+    if (speakerId) {
+      arrowedSpeaker = await this.participantsService.findOneParticipantById(
+        speakerId,
+      );
+      if (!arrowedSpeaker) {
+        throw new NotFoundException('Arrowed speaker not found');
+      }
+    }
     const suggestionToBeCreated = this.suggestionsRepository.create({
       meetingId,
       name,
       description,
       expectedDuration,
       participantId: participant.id,
+      speaker: {
+        id: arrowedSpeaker.id,
+      },
     });
     const createdSuggestion = await this.suggestionsRepository.save(
       suggestionToBeCreated,
     );
-    return createdSuggestion;
+    return this.suggestionsRepository.findOne({ id: createdSuggestion.id });
   }
 
   public async updateSuggestion(
     updateSuggestionDto: UpdateSuggestionDto,
     suggestion: Suggestion,
   ) {
-    const suggestionToBeUpdated = this.suggestionsRepository.create({
+    const { description, expectedDuration, name, speakerId } =
+      updateSuggestionDto;
+    let speaker: Participant;
+    if (speakerId) {
+      speaker = await this.participantsService.findOneParticipantById(
+        speakerId,
+      );
+    }
+    suggestion = {
       ...suggestion,
-      ...updateSuggestionDto,
-    });
-    return this.suggestionsRepository.save(suggestionToBeUpdated);
+      ...(description && { description }),
+      ...(expectedDuration && { expectedDuration }),
+      ...(name && { name }),
+      ...(speakerId && { speaker }),
+    };
+    const updatedSuggestion = await this.suggestionsRepository.save(suggestion);
+    return this.suggestionsRepository.findOne({ id: updatedSuggestion.id });
   }
 
   public async markSuggestionAsAccepted(
