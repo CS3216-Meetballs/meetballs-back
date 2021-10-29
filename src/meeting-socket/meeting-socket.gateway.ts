@@ -88,7 +88,9 @@ export class MeetingSocketGateway
   }
 
   emitSuggestionsDeleted(meetingId: string, suggestionId: string) {
-    return this.server.to(meetingId).emit('suggestionDeleted', suggestionId);
+    return this.server
+      .to([meetingId, `${meetingId}_host`])
+      .emit('suggestionDeleted', suggestionId);
   }
 
   emitParticipantsUpdated(meetingId: string, participant: Participant) {
