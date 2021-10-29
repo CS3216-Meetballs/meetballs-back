@@ -52,7 +52,7 @@ export class MailService {
   ): Promise<boolean> {
     await this.mailerService.sendMail({
       to: participant.userEmail,
-      subject: 'MeetBalls Meeting Invitation',
+      subject: `Invitation to ${meeting.name}`,
       template: './invite',
       context: {
         title: 'Join MeetBalls Meeting',
