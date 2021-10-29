@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -23,7 +22,6 @@ import { DeleteParticipantsDto } from './dto/delete-participants.dto';
 import { ParticipantDto } from './dto/participant-email.dto';
 import { UpdateParticipantDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
-import { User } from 'src/users/user.entity';
 import { isNil } from 'lodash';
 import { Version1MagicPayload } from './../shared/interface/generate-participant-magic-link.interface';
 
