@@ -1,3 +1,4 @@
+import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 import { MeetingSocketService } from './meeting-socket.service';
 import { Suggestion } from 'src/suggestions/suggestion.entity';
 import { Participant } from './../participants/participant.entity';
@@ -49,7 +50,10 @@ export class MeetingSocketGateway
       return false;
     }
 
-    if (user?.uuid === meeting?.hostId) {
+    if (
+      user?.uuid === meeting?.hostId ||
+      participant.role === ParticipantRole.CO_HOST
+    ) {
       client.join(`${id}_host`);
     } else {
       client.join(id);
@@ -88,7 +92,9 @@ export class MeetingSocketGateway
   }
 
   emitSuggestionsDeleted(meetingId: string, suggestionId: string) {
-    return this.server.to(meetingId).emit('suggestionDeleted', suggestionId);
+    return this.server
+      .to([meetingId, `${meetingId}_host`])
+      .emit('suggestionDeleted', suggestionId);
   }
 
   emitParticipantsUpdated(meetingId: string, participant: Participant) {

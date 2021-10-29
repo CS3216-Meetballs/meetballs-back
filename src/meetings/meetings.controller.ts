@@ -36,6 +36,7 @@ import { GetMeetingViaMagicLinkDto } from './dto/get-meeting-via-magic-link-resp
 import { Participant } from 'src/participants/participant.entity';
 import { PaginatedMeetings } from './dto/paginated-meetings.dto';
 import { MultipleMeetingQuery } from './dto/multiple-meeting-query.dto';
+import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 
 @ApiTags('Meeting')
 @Controller('meeting')
@@ -179,14 +180,35 @@ export class MeetingsController {
     description: 'Successfully started meeting',
   })
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Post('/start/:id')
   public async startMeeting(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    const requesterId = requester.uuid;
-    const meeting = await this.meetingsService.startMeeting(id, requesterId);
+    const targetMeeting = await this.meetingsService.findOneById(id, true);
+
+    if (!targetMeeting) {
+      throw new NotFoundException('Meeting not found');
+    }
+
+    if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== targetMeeting.id ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Cannot start meeting');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        targetMeeting.id,
+      ))
+    ) {
+      throw new ForbiddenException('Cannot start meeting');
+    }
+
+    const meeting = await this.meetingsService.startMeeting(targetMeeting);
     this.meetingGateway.emitMeetingUpdated(id, meeting);
     return;
   }
@@ -195,14 +217,35 @@ export class MeetingsController {
     description: 'Successfully ended meeting',
   })
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Post('/next/:id')
   public async nextMeetingItem(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    const requesterId = requester.uuid;
-    const meeting = await this.meetingsService.nextMeetingItem(id, requesterId);
+    const targetMeeting = await this.meetingsService.findOneById(id, true);
+
+    if (!targetMeeting) {
+      throw new NotFoundException('Meeting not found');
+    }
+
+    if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== targetMeeting.id ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Cannot move to next meeting item');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        targetMeeting.id,
+      ))
+    ) {
+      throw new ForbiddenException('Cannot move to next meeting item');
+    }
+
+    const meeting = await this.meetingsService.nextMeetingItem(targetMeeting);
     this.meetingGateway.emitMeetingUpdated(id, meeting);
     return;
   }
@@ -211,14 +254,35 @@ export class MeetingsController {
     description: 'Successfully ended meeting',
   })
   @ApiParam({ name: 'id', description: 'The unique zoom meeting id' })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Post('/end/:id')
   public async endMeeting(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    const requesterId = requester.uuid;
-    const meeting = await this.meetingsService.endMeeting(id, requesterId);
+    const targetMeeting = await this.meetingsService.findOneById(id, true);
+
+    if (!targetMeeting) {
+      throw new NotFoundException('Meeting not found');
+    }
+
+    if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== targetMeeting.id ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Cannot end meeting');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        targetMeeting.id,
+      ))
+    ) {
+      throw new ForbiddenException('Cannot end meeting');
+    }
+
+    const meeting = await this.meetingsService.endMeeting(targetMeeting);
     this.meetingGateway.emitMeetingUpdated(id, meeting);
     return;
   }

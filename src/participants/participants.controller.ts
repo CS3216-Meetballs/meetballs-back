@@ -21,7 +21,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
+import { UseAuth } from '../shared/decorators/auth.decorator';
 import {
   CreateParticipantsDto,
   CreateParticipantDto,
@@ -37,8 +37,8 @@ import {
   CreateParticipantsMagicLinkDto,
 } from './dto/create-participant-magic-link.dto';
 import { StatusResponseDto } from 'src/shared/dto/result-status.dto';
-import { Usr } from 'src/shared/decorators/user.decorator';
 import { User } from 'src/users/user.entity';
+import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 
 @ApiTags('Participant')
 @Controller('participant')
@@ -61,14 +61,27 @@ export class ParticipantsController {
       'There are participants with duplicate emails in the request body OR Participants with some of the emails already exist',
   })
   @ApiBody({ type: CreateParticipantsDto })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Post('/create-many')
   public async createParticipants(
-    @Usr() user: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Body() createParticipantsDto: CreateParticipantsDto,
   ): Promise<Participant[]> {
     const meetingId = createParticipantsDto.participants[0].meetingId;
-    if (!(await this.meetingsService.isHostOfMeeting(user.uuid, meetingId))) {
+
+    if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to create');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        meetingId,
+      ))
+    ) {
       throw new ForbiddenException('Not allowed to create');
     }
 
@@ -88,25 +101,43 @@ export class ParticipantsController {
     description: 'Invalid inputs in request body',
   })
   @ApiBody({ type: DeleteParticipantsDto })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Delete('/')
   public async deleteParticipants(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Body() deleteParticipantsDto: DeleteParticipantsDto,
   ): Promise<void> {
+    const meetingId = deleteParticipantsDto.meetingId;
     if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to delete');
+    } else if (
+      userOrParticipant['uuid'] &&
       !(await this.meetingsService.isHostOfMeeting(
-        requester.uuid,
-        deleteParticipantsDto.meetingId,
+        (userOrParticipant as User).uuid,
+        meetingId,
       ))
     ) {
       throw new ForbiddenException('Not allowed to delete');
     }
 
+    if (
+      (userOrParticipant as Participant).id &&
+      deleteParticipantsDto.participants.findIndex(
+        (p) => p.participantId === (userOrParticipant as Participant).id,
+      )
+    ) {
+      throw new ForbiddenException('Not allowed to delete yourself');
+    }
+
     await this.participantsService.deleteParticipants(
       deleteParticipantsDto,
-      requester,
+      (userOrParticipant as User).email,
     );
+
     deleteParticipantsDto.participants.forEach((p) =>
       this.meetingGateway.emitParticipantsDeleted(
         deleteParticipantsDto.meetingId,
@@ -124,20 +155,29 @@ export class ParticipantsController {
     description: 'Invalid positions in request body',
   })
   @ApiBody({ type: UpdateParticipantDto })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Put('/')
   public async updateParticipant(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Body() updateParticipantDto: UpdateParticipantDto,
   ): Promise<Participant> {
+    const meetingId = updateParticipantDto.meetingId;
     if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to update');
+    } else if (
+      userOrParticipant['uuid'] &&
       !(await this.meetingsService.isHostOfMeeting(
-        requester.uuid,
-        updateParticipantDto.meetingId,
+        (userOrParticipant as User).uuid,
+        meetingId,
       ))
     ) {
       throw new ForbiddenException('Not allowed to update');
     }
+
     return this.participantsService
       .updateParticipant(updateParticipantDto)
       .then((participant) => {
@@ -182,21 +222,30 @@ export class ParticipantsController {
     description: 'Successfully created participant',
     type: Participant,
   })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @ApiBody({ type: CreateParticipantDto })
   @Post('/')
   public async createOneParticipant(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Body() createParticipantDto: CreateParticipantDto,
   ): Promise<Participant> {
+    const meetingId = createParticipantDto.meetingId;
     if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to create');
+    } else if (
+      userOrParticipant['uuid'] &&
       !(await this.meetingsService.isHostOfMeeting(
-        requester.uuid,
-        createParticipantDto.meetingId,
+        (userOrParticipant as User).uuid,
+        meetingId,
       ))
     ) {
       throw new ForbiddenException('Not allowed to create');
     }
+
     return this.participantsService
       .createOneParticipant(createParticipantDto)
       .then((participant) => {
@@ -211,19 +260,30 @@ export class ParticipantsController {
   @ApiCreatedResponse({
     description: 'Successfully marked participant as present',
   })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @ApiBody({ type: ParticipantDto })
   @Put('/:meetingUuid/present')
   public async markPresent(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Body() participantEmail: ParticipantDto,
   ): Promise<void> {
     if (
-      !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to update');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        meetingId,
+      ))
     ) {
       throw new ForbiddenException('Not allowed to update');
     }
+
     return this.participantsService
       .markPresent(meetingId, participantEmail)
       .then((participant) => {
@@ -235,19 +295,30 @@ export class ParticipantsController {
   @ApiCreatedResponse({
     description: 'Successfully marked participant as absent',
   })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @ApiBody({ type: ParticipantDto })
   @Put('/:meetingUuid/absent')
   public async markAbsent(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Body() participantEmail: ParticipantDto,
   ): Promise<void> {
     if (
-      !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to update');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        meetingId,
+      ))
     ) {
       throw new ForbiddenException('Not allowed to update');
     }
+
     return this.participantsService
       .markAbsent(meetingId, participantEmail)
       .then((participant) => {
@@ -259,19 +330,30 @@ export class ParticipantsController {
   @ApiCreatedResponse({
     description: 'Successfully marked participant as duplicate',
   })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @ApiBody({ type: ParticipantDto })
   @Put('/:meetingUuid/duplicate')
   public async markDuplicate(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Body() participantEmail: ParticipantDto,
   ): Promise<void> {
     if (
-      !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to update');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        meetingId,
+      ))
     ) {
       throw new ForbiddenException('Not allowed to update');
     }
+
     return this.participantsService
       .markDuplicate(meetingId, participantEmail)
       .then((participant) => {
@@ -291,32 +373,51 @@ export class ParticipantsController {
     description: 'User who send invite is not the host of the meeting',
   })
   @ApiBody({ type: CreateParticipantMagicLinkDto })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Post('/send-invite')
   async sendOneMagicLink(
-    @Usr() host: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Body() createParticipantMagicLinkDto: CreateParticipantMagicLinkDto,
   ): Promise<StatusResponseDto> {
+    const { userEmail, meetingId } = createParticipantMagicLinkDto;
+
     if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to send invite');
+    } else if (
+      userOrParticipant['uuid'] &&
       !(await this.meetingsService.isHostOfMeeting(
-        host.uuid,
-        createParticipantMagicLinkDto.meetingId,
+        (userOrParticipant as User).uuid,
+        meetingId,
       ))
     ) {
       throw new ForbiddenException('Not allowed to send invite');
     }
-    const { userEmail, meetingId } = createParticipantMagicLinkDto;
+
     const participant = await this.participantsService.findOneParticipant(
       meetingId,
       userEmail,
       ['meeting'],
     );
 
-    await this.participantsService.sendOneInvite(
-      participant,
-      participant.meeting,
-      host,
-    );
+    if (userOrParticipant['uuid']) {
+      const host = userOrParticipant as User;
+      await this.participantsService.sendOneInvite(
+        participant,
+        participant.meeting,
+        host,
+      );
+    } else {
+      const { userName, userEmail } = userOrParticipant as Participant;
+      await this.participantsService.sendOneInvite(
+        participant,
+        participant.meeting,
+        { firstName: userName, email: userEmail },
+      );
+    }
 
     return {
       success: true,
@@ -329,20 +430,37 @@ export class ParticipantsController {
     description: 'Sent status of meeting participants',
   })
   @ApiBody({ type: CreateParticipantsMagicLinkDto })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Post('/send-multiple-invites')
   async sendMultipleMagicLinks(
-    @Usr() host: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Body() createParticipantsMagicLinkDto: CreateParticipantsMagicLinkDto,
   ): Promise<StatusResponseDto> {
+    const meetingId = createParticipantsMagicLinkDto.participants[0].meetingId;
     if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to send invites');
+    } else if (
+      userOrParticipant['uuid'] &&
       !(await this.meetingsService.isHostOfMeeting(
-        host.uuid,
-        createParticipantsMagicLinkDto.participants[0].meetingId,
+        (userOrParticipant as User).uuid,
+        meetingId,
       ))
     ) {
       throw new ForbiddenException('Not allowed to send invites');
     }
+
+    let host: { firstName: string; email: string };
+    if (userOrParticipant['uuid']) {
+      host = userOrParticipant as User;
+    } else {
+      const { userName, userEmail } = userOrParticipant as Participant;
+      host = { firstName: userName, email: userEmail };
+    }
+
     const promises = createParticipantsMagicLinkDto.participants.map(
       async (details) => {
         const { userEmail, meetingId } = details;

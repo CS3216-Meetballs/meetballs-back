@@ -91,21 +91,6 @@ export class UploadsController {
         meetingId,
       ))
     ) {
-      throw new ForbiddenException('Not allowed to write');
-    }
-
-    if (
-      userOrParticipant['meetingId'] &&
-      (userOrParticipant as Participant).meetingId !== meetingId
-    ) {
-      throw new ForbiddenException('Not part of meeting');
-    } else if (
-      userOrParticipant['uuid'] &&
-      !(await this.meetingsService.isHostOfMeeting(
-        (userOrParticipant as User).uuid,
-        meetingId,
-      ))
-    ) {
       throw new ForbiddenException('Not allowed to read meeting');
     }
 

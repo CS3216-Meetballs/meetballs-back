@@ -1,3 +1,4 @@
+import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 import {
   Body,
   Controller,
@@ -17,8 +18,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { UseAuth, UseBearerAuth } from 'src/shared/decorators/auth.decorator';
-import { Usr } from 'src/shared/decorators/user.decorator';
+import { UseAuth } from 'src/shared/decorators/auth.decorator';
 import { User } from '../users/user.entity';
 import { CreateSuggestionDto } from './dto/create-suggestion.dto';
 import { UpdateSuggestionDto } from './dto/update-suggestion.dto';
@@ -49,17 +49,28 @@ export class SuggestionsController {
     name: 'meetingId',
     description: 'The id of the meeting',
   })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Get('/:meetingId')
   public async getSuggestions(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('meetingId', ParseUUIDPipe) meetingId: string,
   ): Promise<Suggestion[]> {
     if (
-      !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to access meeting');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        meetingId,
+      ))
     ) {
       throw new ForbiddenException('Not host of meeting');
     }
+
     return this.suggestionsService.getSuggestions(meetingId);
   }
 
@@ -137,9 +148,11 @@ export class SuggestionsController {
 
     if (
       userOrParticipant['meetingId'] &&
-      (userOrParticipant as Participant).meetingId !== suggestion.meetingId
+      ((userOrParticipant as Participant).meetingId !== suggestion.meetingId ||
+        ((userOrParticipant as Participant).id !== suggestion.participantId &&
+          (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST))
     ) {
-      throw new ForbiddenException('Not allowed to access meeting');
+      throw new ForbiddenException('Not allowed to edit suggestion');
     } else if (
       userOrParticipant['uuid'] &&
       !(await this.meetingsService.isHostOfMeeting(
@@ -170,16 +183,41 @@ export class SuggestionsController {
     name: 'suggestionId',
     description: 'The id of the suggestion',
   })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Put('/accept/:suggestionId')
   public async markSuggestionAsAccepted(
     @Param('suggestionId', ParseUUIDPipe) suggestionId: string,
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
   ): Promise<AgendaItem> {
+    const suggestionToBeAccepted =
+      await this.suggestionsService.findOneSuggestion(suggestionId);
+    if (!suggestionToBeAccepted) {
+      throw new NotFoundException('Suggestion cannot be found');
+    }
+
+    if (userOrParticipant['meetingId']) {
+      if (
+        (userOrParticipant as Participant).meetingId !==
+          suggestionToBeAccepted.meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST
+      ) {
+        throw new ForbiddenException('Not co-host of meeting');
+      }
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        suggestionToBeAccepted.meetingId,
+      ))
+    ) {
+      throw new ForbiddenException(
+        'Cannot accept a suggestion for a meeting when user is not the host',
+      );
+    }
+
     const [suggestion, agendaItem] =
       await this.suggestionsService.markSuggestionAsAccepted(
-        suggestionId,
-        requester.uuid,
+        suggestionToBeAccepted,
       );
 
     this.meetingSocketGateway.emitSuggestionsUpdated(
@@ -194,7 +232,6 @@ export class SuggestionsController {
 
   @ApiOkResponse({
     description: 'Successfully deleted suggestion',
-    type: Suggestion,
   })
   @ApiParam({
     name: 'suggestionId',
@@ -213,11 +250,14 @@ export class SuggestionsController {
       throw new NotFoundException('Suggestion to be deleted not found');
     }
 
-    if (
-      userOrParticipant['meetingId'] &&
-      (userOrParticipant as Participant).meetingId !== suggestion.meetingId
-    ) {
-      throw new ForbiddenException('Not allowed to access meeting');
+    if (userOrParticipant['meetingId']) {
+      if (
+        (userOrParticipant as Participant).meetingId !== suggestion.meetingId ||
+        ((userOrParticipant as Participant).id !== suggestion.participantId &&
+          (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+      ) {
+        throw new ForbiddenException('Not allowed to access meeting');
+      }
     } else if (
       userOrParticipant['uuid'] &&
       !(await this.meetingsService.isHostOfMeeting(
@@ -228,11 +268,12 @@ export class SuggestionsController {
       throw new ForbiddenException('Not allowed to access meeting');
     }
 
-    const deleted = await this.suggestionsService.deleteSuggestion(suggestion);
+    await this.suggestionsService.deleteSuggestion(suggestion);
+    console.log(suggestion.meetingId, suggestionId);
     this.meetingSocketGateway.emitSuggestionsDeleted(
-      deleted.meetingId,
+      suggestion.meetingId,
       suggestionId,
     );
-    return deleted;
+    return;
   }
 }

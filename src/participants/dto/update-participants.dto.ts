@@ -25,11 +25,11 @@ export class UpdateParticipantDto {
   @IsOptional()
   @ApiProperty({
     enum: ParticipantRole,
-    description: 'CONFERENCE_MEMBER=1, ADMIN=2, SPEAKER=3',
+    description: 'CONFERENCE_MEMBER=1, HOST=2, CO-HOST=3',
   })
   @IsEnum(ParticipantRole, {
     message:
-      'Role should either be 1 for CONFERENCE_MEMBER, or 2 for ADMIN, or 3 for SPEAKER',
+      'Role should either be 1 for CONFERENCE_MEMBER, or 2 for HOST, or 3 for CO-HOST',
   })
   role?: ParticipantRole;
 
