@@ -53,7 +53,9 @@ export class SuggestionsService {
       expectedDuration,
       participantId: participant.id,
       ...(speakerId && {
-        id: arrowedSpeaker.id,
+        speaker: {
+          id: arrowedSpeaker.id,
+        },
       }),
     });
     const createdSuggestion = await this.suggestionsRepository.save(
