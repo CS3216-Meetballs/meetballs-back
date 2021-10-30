@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AgendaItemsService } from 'src/agenda-items/agenda-items.service';
 import { MeetingsService } from 'src/meetings/meetings.service';
@@ -90,23 +86,8 @@ export class SuggestionsService {
   }
 
   public async markSuggestionAsAccepted(
-    suggestionId: string,
-    requesterId: string,
+    suggestionToBeAccepted: Suggestion,
   ): Promise<[Suggestion, AgendaItem]> {
-    const suggestionToBeAccepted = await this.findOneSuggestion(suggestionId);
-    if (!suggestionToBeAccepted) {
-      throw new NotFoundException('Suggestion cannot be found');
-    }
-    // find out if he is the host of the meeting that got the suggestion
-    const meetingContainingSuggestion = await this.meetingsService.findOneById(
-      suggestionToBeAccepted.meetingId,
-    );
-    if (meetingContainingSuggestion.hostId !== requesterId) {
-      throw new ForbiddenException(
-        'Cannot accept a suggestion for a meeting when user is not the host',
-      );
-    }
-
     suggestionToBeAccepted.accepted = true;
     const suggestion = await this.suggestionsRepository.save(
       suggestionToBeAccepted,

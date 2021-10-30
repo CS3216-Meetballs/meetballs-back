@@ -61,7 +61,7 @@ export class MeetingsSeeder implements ISeeder {
         {
           userName: 'Admin',
           userEmail: user.email,
-          role: ParticipantRole.ADMIN,
+          role: ParticipantRole.HOST,
         },
         {
           userName: 'Meetball 1',
@@ -71,7 +71,7 @@ export class MeetingsSeeder implements ISeeder {
         {
           userName: 'Meetball 2',
           userEmail: 'meetball2@meetmail.com',
-          role: ParticipantRole.ADMIN,
+          role: ParticipantRole.CO_HOST,
         },
       ],
     });

@@ -1,3 +1,4 @@
+import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 import { MeetingSocketService } from './meeting-socket.service';
 import { Suggestion } from 'src/suggestions/suggestion.entity';
 import { Participant } from './../participants/participant.entity';
@@ -8,7 +9,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { classToPlain } from 'class-transformer';
+import { plainToClass } from 'class-transformer';
 import { Server, Socket } from 'socket.io';
 import { Meeting } from '../meetings/meeting.entity';
 
@@ -49,7 +50,10 @@ export class MeetingSocketGateway
       return false;
     }
 
-    if (user?.uuid === meeting?.hostId) {
+    if (
+      user?.uuid === meeting?.hostId ||
+      participant.role === ParticipantRole.CO_HOST
+    ) {
       client.join(`${id}_host`);
     } else {
       client.join(id);
@@ -66,9 +70,21 @@ export class MeetingSocketGateway
   }
 
   emitMeetingUpdated(meetingId: string, meeting: Meeting) {
+    this.server
+      .to(`${meetingId}_host`)
+      .emit(
+        'meetingUpdated',
+        JSON.stringify(
+          plainToClass(Meeting, meeting, { groups: ['role:host'] }),
+        ),
+      );
+
     return this.server
-      .to([meetingId, `${meetingId}_host`])
-      .emit('meetingUpdated', JSON.stringify(classToPlain(meeting)));
+      .to(meetingId)
+      .emit(
+        'meetingUpdated',
+        JSON.stringify(plainToClass(Meeting, meeting, { groups: [] })),
+      );
   }
 
   emitMeetingDeleted(meetingId: string) {
@@ -84,7 +100,7 @@ export class MeetingSocketGateway
   emitSuggestionsUpdated(meetingId: string, suggestion: Suggestion) {
     return this.server
       .to([meetingId, `${meetingId}_host`])
-      .emit('suggestionUpdated', JSON.stringify(classToPlain(suggestion)));
+      .emit('suggestionUpdated', JSON.stringify(suggestion));
   }
 
   emitSuggestionsDeleted(meetingId: string, suggestionId: string) {
@@ -98,13 +114,20 @@ export class MeetingSocketGateway
       .to(`${meetingId}_host`)
       .emit(
         'participantUpdated',
-        JSON.stringify(classToPlain(participant, { groups: ['role:host'] })),
+        JSON.stringify(
+          plainToClass(Participant, participant, { groups: ['role:host'] }),
+        ),
       );
 
     const { userEmail: _, ...filteredParticipant } = participant;
     return this.server
       .to(meetingId)
-      .emit('participantUpdated', JSON.stringify(filteredParticipant));
+      .emit(
+        'participantUpdated',
+        JSON.stringify(
+          plainToClass(Participant, filteredParticipant, { groups: [] }),
+        ),
+      );
   }
 
   emitParticipantsDeleted(meetingId: string, participantId: string) {

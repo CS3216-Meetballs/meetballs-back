@@ -19,18 +19,18 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { UseAuth, UseBearerAuth } from '../shared/decorators/auth.decorator';
+import { UseAuth } from '../shared/decorators/auth.decorator';
 import { AgendaItem } from './agenda-item.entity';
 import { AgendaItemsService } from './agenda-items.service';
 import { CreateAgendaItemDto } from './dto/create-agenda-item.dto';
 import { UpdateAgendaItemDto } from './dto/update-agenda-item.dto';
 import { UpdateAgendaItemsPositionDto } from './dto/update-agenda-items-position.dto';
 import { MeetingSocketGateway } from '../meeting-socket/meeting-socket.gateway';
-import { Usr } from 'src/shared/decorators/user.decorator';
 import { User } from 'src/users/user.entity';
 import { Participant } from 'src/participants/participant.entity';
 import { AccessUser } from 'src/shared/decorators/participant.decorator';
 import { AccessGuard } from 'src/auth/guard/access.guard';
+import { ParticipantRole } from 'src/shared/enum/participant-role.enum';
 
 @ApiTags('Agenda Item')
 @Controller('agenda-item')
@@ -45,16 +45,24 @@ export class AgendaItemsController {
     description: 'Successfully created agenda item',
     type: AgendaItem,
   })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @ApiBody({ type: CreateAgendaItemDto })
   @Post('/')
   public async createAgendaItems(
-    @Usr() user: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Body() createAgendaItemDto: CreateAgendaItemDto,
   ): Promise<AgendaItem> {
     if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !==
+        createAgendaItemDto.meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to create');
+    } else if (
+      userOrParticipant['uuid'] &&
       !(await this.meetingsService.isHostOfMeeting(
-        user.uuid,
+        (userOrParticipant as User).uuid,
         createAgendaItemDto.meetingId,
       ))
     ) {
@@ -103,15 +111,25 @@ export class AgendaItemsController {
     name: 'position',
     description: 'The position of the agenda item',
   })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Delete('/:meetingUuid/:position')
   public async deleteAgendaItemByPosition(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Param('meetingUuid', ParseUUIDPipe) meetingId: string,
     @Param('position', ParseIntPipe) position: number,
   ): Promise<void> {
     if (
-      !(await this.meetingsService.isHostOfMeeting(requester.uuid, meetingId))
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !== meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to delete agenda');
+    } else if (
+      userOrParticipant['uuid'] &&
+      !(await this.meetingsService.isHostOfMeeting(
+        (userOrParticipant as User).uuid,
+        meetingId,
+      ))
     ) {
       throw new ForbiddenException('Not allowed to delete agenda');
     }
@@ -145,12 +163,14 @@ export class AgendaItemsController {
       throw new NotFoundException(`Agenda item not found`);
     }
 
-    if (
-      userOrParticipant['meetingId'] &&
-      ((userOrParticipant as Participant).meetingId !== meetingId ||
-        (userOrParticipant as Participant).id !== targetAgenda?.speaker?.id)
-    ) {
-      throw new ForbiddenException('Not allowed to update agenda');
+    if (userOrParticipant['meetingId']) {
+      if (
+        (userOrParticipant as Participant).meetingId !== meetingId ||
+        ((userOrParticipant as Participant).id !== targetAgenda?.speaker?.id &&
+          (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+      ) {
+        throw new ForbiddenException('Not allowed to update agenda');
+      }
     } else if (
       userOrParticipant['uuid'] &&
       (userOrParticipant as User).uuid !== targetAgenda?.meeting?.hostId
@@ -171,15 +191,23 @@ export class AgendaItemsController {
   @ApiBody({
     type: UpdateAgendaItemsPositionDto,
   })
-  @UseBearerAuth()
+  @UseAuth(AccessGuard)
   @Put('/positions')
   public async reorderAgendaItemsPosition(
-    @Usr() requester: User,
+    @AccessUser() userOrParticipant: User | Participant,
     @Body() updateAgendaItemsPositionDto: UpdateAgendaItemsPositionDto,
   ): Promise<void> {
     if (
+      userOrParticipant['meetingId'] &&
+      ((userOrParticipant as Participant).meetingId !==
+        updateAgendaItemsPositionDto.meetingId ||
+        (userOrParticipant as Participant).role !== ParticipantRole.CO_HOST)
+    ) {
+      throw new ForbiddenException('Not allowed to move agenda');
+    } else if (
+      userOrParticipant['uuid'] &&
       !(await this.meetingsService.isHostOfMeeting(
-        requester.uuid,
+        (userOrParticipant as User).uuid,
         updateAgendaItemsPositionDto.meetingId,
       ))
     ) {

@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -23,7 +22,6 @@ import { DeleteParticipantsDto } from './dto/delete-participants.dto';
 import { ParticipantDto } from './dto/participant-email.dto';
 import { UpdateParticipantDto } from './dto/update-participants.dto';
 import { Participant } from './participant.entity';
-import { User } from 'src/users/user.entity';
 import { isNil } from 'lodash';
 import { Version1MagicPayload } from './../shared/interface/generate-participant-magic-link.interface';
 
@@ -100,7 +98,7 @@ export class ParticipantsService {
 
   public async deleteParticipants(
     deleteParticipantsDto: DeleteParticipantsDto,
-    requester: User,
+    requesterEmail?: string,
   ): Promise<void> {
     const { meetingId, participants } = deleteParticipantsDto;
     const listOfIds = [...participants].map(
@@ -112,9 +110,10 @@ export class ParticipantsService {
         id: In(listOfIds),
       });
       if (
+        requesterEmail &&
         !isNil(
           participantsToBeDeleted.find(
-            (ppl) => ppl.userEmail === requester.email,
+            (ppl) => ppl.userEmail === requesterEmail,
           ),
         )
       ) {
@@ -212,16 +211,12 @@ export class ParticipantsService {
   public async sendOneInvite(
     participant: Participant,
     meeting: Meeting,
-    host: User,
+    host: { firstName: string; email: string },
   ): Promise<Participant> {
     if (meeting.endedAt && meeting.endedAt < new Date()) {
       throw new BadRequestException('Meeting has already ended');
     }
     const { id } = participant;
-
-    if (host.uuid !== meeting.hostId) {
-      throw new ForbiddenException('Not host of meeting');
-    }
 
     const magicLinkOptions = this.jwtConfigService.magicLinkTokenOptions;
     const payload: Version1MagicPayload = {

@@ -47,7 +47,7 @@ export class MailService {
   async sendMagicLink(
     participant: Participant,
     meeting: Meeting,
-    host: User,
+    host: { firstName: string; email: string },
     magicLink: string,
   ): Promise<boolean> {
     await this.mailerService.sendMail({
@@ -81,13 +81,8 @@ export class MailService {
     role: ParticipantRole,
     meetingName: string,
   ) {
-    if (role === ParticipantRole.ADMIN) {
+    if (role === ParticipantRole.CO_HOST) {
       return `${hostName} has invited you to join ${meetingName} as a co-host.`;
-    } else if (role === ParticipantRole.SPEAKER) {
-      return (
-        `${hostName} has invited you to join ${meetingName} as a co-host. ` +
-        `If you have any speaker materials to upload, please feel free to visit the link to upload.`
-      );
     } else {
       return `${hostName} has invited you to join ${meetingName} as a participant.`;
     }
