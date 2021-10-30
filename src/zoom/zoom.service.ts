@@ -170,7 +170,7 @@ export class ZoomService {
       console.log('meeting not tracked by meetballs');
       return null;
     }
-    console.log(joinedParticipant);
+    console.log(joinedParticipant?.user_name + ' Joined');
 
     const { email, user_name, join_time, id } = joinedParticipant;
 
@@ -195,10 +195,7 @@ export class ZoomService {
         meetingId: meeting.id,
         userEmail: email,
         userName: user_name,
-        role:
-          id === host_id
-            ? ParticipantRole.ADMIN
-            : ParticipantRole.CONFERENCE_MEMBER,
+        role: id === host_id ? ParticipantRole.HOST : ParticipantRole.GUEST,
         timeJoined: new Date(join_time),
       });
       return this.participantRepository.findOne({

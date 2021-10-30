@@ -1,6 +1,5 @@
 import {
   IsDefined,
-  IsEmail,
   IsInt,
   IsOptional,
   IsPositive,
@@ -12,13 +11,13 @@ export class CreateSuggestionDto {
   @IsUUID()
   meetingId: string;
 
-  // @IsEmail()
-  // @IsDefined()
-  // userEmail: string;
-
   @IsString()
   @IsDefined()
   name: string;
+
+  @IsUUID()
+  @IsOptional()
+  speakerId: string;
 
   @IsString()
   @IsOptional()

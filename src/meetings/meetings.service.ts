@@ -151,16 +151,16 @@ export class MeetingsService {
         {
           userEmail: host.email,
           userName: host.firstName,
-          role: ParticipantRole.ADMIN,
+          role: ParticipantRole.HOST,
           invited: true,
         },
       ],
       agendaItems: createMeetingDto.agendaItems || [
         {
           position: 0,
-          name: 'Your 1st meeting item',
-          description: 'Click the edit button to edit this agenda item',
-          expectedDuration: 1800000, // 30min
+          name: 'Auto-generated Agenda Item',
+          description: 'Description of Auto-generated Agenda Item',
+          expectedDuration: 300000, // 5min
         },
       ],
     });
@@ -210,19 +210,8 @@ export class MeetingsService {
     return !!(await this.meetingRepository.findOne({ id: meetingUuid }));
   }
 
-  async startMeeting(targetId: string, requesterId: string): Promise<Meeting> {
+  async startMeeting(targetMeeting: Meeting): Promise<Meeting> {
     const currTime = new Date();
-    const targetMeeting = await this.meetingRepository.findOne(
-      { id: targetId },
-      { relations: ['agendaItems'] },
-    );
-    if (!targetMeeting) {
-      throw new NotFoundException('Meeting not found');
-    }
-
-    if (targetMeeting.hostId !== requesterId) {
-      throw new ForbiddenException('Cannot start meeting');
-    }
 
     if (targetMeeting.type != ZoomMeetingStatus.WAITING) {
       throw new BadRequestException('Cannot start an ongoing or ended meeting');
@@ -244,19 +233,8 @@ export class MeetingsService {
     return targetMeeting;
   }
 
-  public async nextMeetingItem(targetId: string, requesterId: string) {
+  public async nextMeetingItem(targetMeeting: Meeting) {
     const currTime = new Date();
-    const targetMeeting = await this.meetingRepository.findOne(
-      { id: targetId },
-      { relations: ['agendaItems'] },
-    );
-    if (!targetMeeting) {
-      throw new NotFoundException('Meeting not found');
-    }
-
-    if (targetMeeting.hostId !== requesterId) {
-      throw new ForbiddenException('Cannot move to next meeting item');
-    }
 
     if (!targetMeeting.agendaItems || targetMeeting.agendaItems.length <= 1) {
       throw new BadRequestException('No next agenda item');
@@ -289,19 +267,8 @@ export class MeetingsService {
     return targetMeeting;
   }
 
-  async endMeeting(targetId: string, requesterId: string): Promise<Meeting> {
+  async endMeeting(targetMeeting: Meeting): Promise<Meeting> {
     const currTime = new Date();
-    const targetMeeting = await this.meetingRepository.findOne(
-      { id: targetId },
-      { relations: ['agendaItems'] },
-    );
-    if (!targetMeeting) {
-      throw new NotFoundException('Meeting not found');
-    }
-
-    if (targetMeeting.hostId !== requesterId) {
-      throw new ForbiddenException('Cannot end meeting');
-    }
 
     if (targetMeeting.type != ZoomMeetingStatus.STARTED) {
       throw new BadRequestException(

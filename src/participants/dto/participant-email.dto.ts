@@ -1,7 +1,7 @@
-import { IsDefined, IsEmail } from 'class-validator';
+import { IsDefined, IsUUID } from 'class-validator';
 
-export class ParticipantEmailDto {
-  @IsEmail()
+export class ParticipantDto {
+  @IsUUID()
   @IsDefined()
-  email: string;
+  participantId: string;
 }

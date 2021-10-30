@@ -1,18 +1,15 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AgendaItemsService } from 'src/agenda-items/agenda-items.service';
 import { MeetingsService } from 'src/meetings/meetings.service';
 import { Participant } from 'src/participants/participant.entity';
-import { ParticipantsService } from 'src/participants/participants.service';
+import { AgendaItem } from './../agenda-items/agenda-item.entity';
 
 import { Repository } from 'typeorm';
 import { CreateSuggestionDto } from './dto/create-suggestion.dto';
 import { UpdateSuggestionDto } from './dto/update-suggestion.dto';
 import { Suggestion } from './suggestion.entity';
+import { ParticipantsService } from '../participants/participants.service';
 
 @Injectable()
 export class SuggestionsService {
@@ -38,57 +35,71 @@ export class SuggestionsService {
     createSuggestionDto: CreateSuggestionDto,
     participant: Participant,
   ): Promise<Suggestion> {
-    const { meetingId, description, expectedDuration, name } =
+    const { meetingId, description, expectedDuration, name, speakerId } =
       createSuggestionDto;
+    let arrowedSpeaker: Participant;
+    if (speakerId) {
+      arrowedSpeaker = await this.participantsService.findOneParticipantById(
+        speakerId,
+      );
+      if (!arrowedSpeaker) {
+        throw new NotFoundException('Arrowed speaker not found');
+      }
+    }
     const suggestionToBeCreated = this.suggestionsRepository.create({
       meetingId,
       name,
       description,
       expectedDuration,
       participantId: participant.id,
+      ...(speakerId && {
+        speaker: {
+          id: arrowedSpeaker.id,
+        },
+      }),
     });
     const createdSuggestion = await this.suggestionsRepository.save(
       suggestionToBeCreated,
     );
-    return createdSuggestion;
+    return this.suggestionsRepository.findOne({ id: createdSuggestion.id });
   }
 
   public async updateSuggestion(
     updateSuggestionDto: UpdateSuggestionDto,
     suggestion: Suggestion,
   ) {
-    const suggestionToBeUpdated = this.suggestionsRepository.create({
+    const { description, expectedDuration, name, speakerId } =
+      updateSuggestionDto;
+    let speaker: Participant;
+    if (speakerId) {
+      speaker = await this.participantsService.findOneParticipantById(
+        speakerId,
+      );
+    }
+    suggestion = {
       ...suggestion,
-      ...updateSuggestionDto,
-    });
-    return this.suggestionsRepository.save(suggestionToBeUpdated);
+      ...(description && { description }),
+      ...(expectedDuration && { expectedDuration }),
+      ...(name && { name }),
+      ...(speakerId ? { speaker } : { speaker: null }),
+    };
+    const updatedSuggestion = await this.suggestionsRepository.save(suggestion);
+    return this.suggestionsRepository.findOne({ id: updatedSuggestion.id });
   }
 
   public async markSuggestionAsAccepted(
-    suggestionId: string,
-    requesterId: string,
-  ) {
-    const suggestionToBeAccepted = await this.findOneSuggestion(suggestionId);
-    if (!suggestionToBeAccepted) {
-      throw new NotFoundException('Suggestion cannot be found');
-    }
-    // find out if he is the host of the meeting that got the suggestion
-    const meetingContainingSuggestion = await this.meetingsService.findOneById(
-      suggestionToBeAccepted.meetingId,
-    );
-    if (meetingContainingSuggestion.hostId !== requesterId) {
-      throw new ForbiddenException(
-        'Cannot accept a suggestion for a meeting when user is not the host',
-      );
-    }
-
+    suggestionToBeAccepted: Suggestion,
+  ): Promise<[Suggestion, AgendaItem]> {
     suggestionToBeAccepted.accepted = true;
     const suggestion = await this.suggestionsRepository.save(
       suggestionToBeAccepted,
     );
-    return this.agendaItemsService.createOneAgendaItemFromSuggestion(
-      suggestion,
-    );
+    const newAgenda =
+      await this.agendaItemsService.createOneAgendaItemFromSuggestion(
+        suggestion,
+      );
+
+    return [suggestion, newAgenda];
   }
 
   public async deleteSuggestion(

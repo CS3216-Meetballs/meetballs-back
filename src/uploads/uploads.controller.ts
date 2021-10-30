@@ -16,7 +16,7 @@ import { MeetingsService } from './../meetings/meetings.service';
 import { Participant } from '../participants/participant.entity';
 import { User } from '../users/user.entity';
 import { AccessUser } from './../shared/decorators/participant.decorator';
-import { AccessGuard } from './../participants/guard/access.guard';
+import { AccessGuard } from '../auth/guard/access.guard';
 
 @ApiTags('Uploads')
 @Controller('uploads')
@@ -79,21 +79,6 @@ export class UploadsController {
     @Param('meetingUuid') meetingId: string,
     @Query() readRequest: ReadRequestDto,
   ): Promise<string> {
-    if (
-      userOrParticipant['meetingId'] &&
-      (userOrParticipant as Participant).meetingId !== meetingId
-    ) {
-      throw new ForbiddenException('Not part of meeting');
-    } else if (
-      userOrParticipant['uuid'] &&
-      !(await this.meetingsService.isHostOfMeeting(
-        (userOrParticipant as User).uuid,
-        meetingId,
-      ))
-    ) {
-      throw new ForbiddenException('Not allowed to write');
-    }
-
     if (
       userOrParticipant['meetingId'] &&
       (userOrParticipant as Participant).meetingId !== meetingId
