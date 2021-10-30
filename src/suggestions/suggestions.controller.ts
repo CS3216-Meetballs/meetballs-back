@@ -12,8 +12,11 @@ import {
   Put,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiParam,
   ApiTags,
@@ -99,6 +102,13 @@ export class SuggestionsController {
     description: 'Created suggestion for meeting',
     type: Suggestion,
   })
+  @ApiBadRequestResponse({
+    description: 'Arrowed speaker does not exist',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Not allowed to create suggestion for this meeting as participant does not belong to the meeting',
+  })
   @UseAuth(AuthGuard('participant'))
   @Post('/')
   public async createSuggestion(
@@ -126,6 +136,12 @@ export class SuggestionsController {
   @ApiOkResponse({
     description: 'Successfully updated suggestion',
     type: Suggestion,
+  })
+  @ApiNotFoundResponse({
+    description: 'Suggestion cannot be found',
+  })
+  @ApiBadRequestResponse({
+    description: 'Arrowed speaker cannot be found',
   })
   @ApiParam({
     name: 'suggestionId',
@@ -178,6 +194,9 @@ export class SuggestionsController {
   @ApiCreatedResponse({
     description: 'Successfully accepted suggestion and created an agenda item',
     type: AgendaItem,
+  })
+  @ApiNotFoundResponse({
+    description: 'Suggestion cannot be found',
   })
   @ApiParam({
     name: 'suggestionId',
